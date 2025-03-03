@@ -82,6 +82,7 @@
           ]
         }
       ],
+    "artifactName": "${productName}-Setup-${version}.${ext}",
       "icon": "dev/assets/img/icon.ico"
     },
     "linux": {
@@ -90,6 +91,7 @@
         "deb",
         "rpm"
       ],
+      "artifactName": "${productName}-${version}-${os}.${ext}",
       "category": "Utility",
       "icon": "dev/assets/img/png/logo-512x512.png",
       "maintainer": "juliocesarguanda@gmail.com",

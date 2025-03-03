@@ -7,7 +7,6 @@ const session = require('express-session');
 const cors = require('cors');
 const fs = require('fs-extra');
 
-
 autoUpdater.on('update-available', () => {
   console.log('Actualización disponible.');
 });
@@ -24,7 +23,7 @@ autoUpdater.on('update-downloaded', () => {
   dialog.showMessageBox({
       type: 'info',
       title: 'Actualización lista',
-      message: 'Se descargó una actualización. ¿Reiniciar ahora?',
+      message: 'Se descargó una actualización. ¿Reiniciar ahora? Recuerda que se reiniciará la aplicación.',
       buttons: ['Reiniciar', 'Posponer']
   }).then((result) => {
       if (result.response === 0) {
