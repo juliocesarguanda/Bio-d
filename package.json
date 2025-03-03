@@ -1,12 +1,15 @@
 {
   "name": "bio-d",
   "private": true,
-  "version": "3.0.0",
+  "version": "3.0.1",
   "main": "main.js",
   "type": "commonjs",
   "description": "Sitema de facturación e inventario de laboratorio clinico",
   "author": "Julio Guanda <juliocesarguanda@gmail.com> (https://github.com/juliocesarguanda/Bio-d)",
   "homepage": "https://github.com/juliocesarguanda/Bio-d",
+  "npmRebuild": false,
+  "buildDependenciesFromSource": false,
+  "nodeGypRebuild": false,
   "repository": {
     "type": "git",
     "url": "https://github.com/juliocesarguanda/Bio-d.git"
@@ -55,8 +58,8 @@
     "nodeGypRebuild": false,
     "buildDependenciesFromSource": false,
     "npmRebuild": false,
-    "appId": "Bio-D",
-    "productName": "Bio-D",
+    "appId": "bio-d",
+    "productName": "bio-d",
     "files": [
       "dev/**/*",
       "node_modules/**/*",
@@ -84,12 +87,13 @@
     "linux": {
       "target": [
         "AppImage",
-        "deb"
+        "deb",
+        "rpm"
       ],
       "category": "Utility",
-      "icon": "dev/assets/img/png/logo.png",
+      "icon": "dev/assets/img/png/logo-512x512.png",
       "maintainer": "juliocesarguanda@gmail.com",
-      "vendor": "Bio-D"
+      "vendor": "bio-d"
     },
     "nsis": {
       "oneClick": false,

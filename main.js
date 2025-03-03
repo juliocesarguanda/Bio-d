@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, Menu, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const { exec } = require('child_process');
 const express = require('express');
@@ -6,34 +7,24 @@ const session = require('express-session');
 const cors = require('cors');
 const fs = require('fs-extra');
 
-const { autoUpdater } = require('electron-updater');
-const { dialog } = require('electron');
 
-autoUpdater.on('checking-for-update', () => {
-    console.log('Buscando actualizaciones...');
-});
-
-autoUpdater.on('update-available', (info) => {
-    console.log('Actualización disponible:', info);
+autoUpdater.on('update-available', () => {
+  console.log('Actualización disponible.');
 });
 
 autoUpdater.on('update-not-available', () => {
-    console.log('No hay actualizaciones disponibles.');
+  console.log('No hay actualizaciones disponibles.');
 });
 
-autoUpdater.on('error', (err) => {
-    console.error('Error en el proceso de actualización:', err);
-});
-
-autoUpdater.on('download-progress', (progress) => {
-    console.log(`Progreso de descarga: ${progress.percent}%`);
+autoUpdater.on('error', (error) => {
+  console.error('Error en autoUpdater:', error.message);
 });
 
 autoUpdater.on('update-downloaded', () => {
   dialog.showMessageBox({
       type: 'info',
-      title: 'Actualización disponible',
-      message: 'Hay una actualización lista. ¿Reiniciar y aplicar?',
+      title: 'Actualización lista',
+      message: 'Se descargó una actualización. ¿Reiniciar ahora?',
       buttons: ['Reiniciar', 'Posponer']
   }).then((result) => {
       if (result.response === 0) {
@@ -42,7 +33,8 @@ autoUpdater.on('update-downloaded', () => {
   });
 });
 
-// Función para configurar y iniciar el servidor Express
+
+// Función para configurar y crear el servidor Express
 function createServer() {
   const serverApp = express();
 
@@ -50,7 +42,7 @@ function createServer() {
   const port = defaultPort;
 
   const corsOptions = {
-    origin: `*`,
+    origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     optionsSuccessStatus: 204
   };
@@ -58,6 +50,7 @@ function createServer() {
   // Ruta al favicon
   const faviconPath = path.join(__dirname, 'dev/assets/img/icon.ico');
 
+  // Configuración del servidor
   serverApp.use('/favicon.ico', (req, res) => {
     res.sendFile(faviconPath);
   });
@@ -65,24 +58,28 @@ function createServer() {
   serverApp.use(cors(corsOptions));
   serverApp.use(express.json());
   serverApp.use(express.urlencoded({ extended: false }));
-  serverApp.use(session({
-    secret: 'secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: false,
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 2 * 24 * 60 * 60 * 1000
-    }
-  }));
+  serverApp.use(
+    session({
+      secret: 'secret-key',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: false,
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 2 * 24 * 60 * 60 * 1000 // 2 días
+      }
+    })
+  );
 
   // Función para cargar rutas dinámicamente
   const cargarRutas = (carpeta, basePath = '') => {
     fs.readdirSync(carpeta).forEach((archivo) => {
       const fullPath = path.join(carpeta, archivo);
       const stats = fs.statSync(fullPath);
+
       if (stats.isDirectory()) {
+        // Cargar directorios recursivamente
         cargarRutas(fullPath, `${basePath}/${archivo}`);
       } else if (stats.isFile() && path.extname(fullPath) === '.js') {
         const ruta = require(fullPath);
@@ -100,62 +97,71 @@ function createServer() {
   serverApp.get('/health-check', (req, res) => {
     res.status(200).json({ status: 'ok' });
   });
+
   // Función para liberar el puerto
   const liberarPuerto = (port, callback) => {
-    const comando = process.platform === 'win32'
-      ? `netstat -ano | findstr :${port}`
-      : `lsof -i tcp:${port} | grep LISTEN | awk '{print $2}'`;
+    const comando =
+      process.platform === 'win32'
+        ? `netstat -ano | findstr :${port}` // Comando para Windows
+        : `lsof -t -i:${port}`; // Comando para Linux/Unix
 
     exec(comando, (err, stdout, stderr) => {
       if (err || stderr) {
         return callback(err || new Error(stderr));
       }
 
-      const pid = stdout.trim().split('\n')[0];
-      if (!pid) {
-        return callback();
+      const pids = stdout
+        .trim()
+        .split('\n')
+        .filter(Boolean); // Obtener todos los PIDs en uso por el puerto
+
+      if (pids.length === 0) {
+        return callback(); // No hay procesos usando el puerto
       }
 
-      const comandoMatar = process.platform === 'win32'
-        ? `taskkill /PID ${pid} /F`
-        : `kill -9 ${pid}`;
+      // Liberar todos los PIDs encontrados
+      const comandoMatar =
+        process.platform === 'win32'
+          ? `taskkill /PID ${pids.join(' /PID ')} /F` // Liberar para Windows
+          : `kill -9 ${pids.join(' ')}`; // Liberar para Linux/Unix
 
       exec(comandoMatar, (err, stdout, stderr) => {
         if (err || stderr) {
           return callback(err || new Error(stderr));
         }
 
+        console.log(`Procesos liberados en el puerto ${port}: ${pids.join(', ')}`);
         callback();
       });
     });
   };
+
   // Iniciar el servidor y devolver una promesa
   return new Promise((resolve, reject) => {
-
-    serverApp.listen(port, () => {
-      console.log(`Servidor corriendo en el puerto ${port}`);
-      resolve();
-    }).on('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        console.log(`El puerto ${port} está ocupado. Intentando liberar el puerto...`);
-        liberarPuerto(port, (error) => {
-          if (error) {
-            console.error(`No se pudo liberar el puerto ${port}:`, error);
-            process.exit(1);
-          } else {
-            console.log(`Puerto ${port} liberado. Intentando iniciar el servidor de nuevo...`);
-            createServer();
-          }
-        });
-      } else {
-        console.error('Error al iniciar el servidor:', err);
-        process.exit(1);
-      }
-    });
-
+    serverApp
+      .listen(port, () => {
+        console.log(`Servidor corriendo en el puerto ${port}`);
+        resolve();
+      })
+      .on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+          console.log(`El puerto ${port} está ocupado. Intentando liberar el puerto...`);
+          liberarPuerto(port, (error) => {
+            if (error) {
+              console.error(`No se pudo liberar el puerto ${port}:`, error);
+              process.exit(1);
+            } else {
+              console.log(`Puerto ${port} liberado. Intentando iniciar el servidor de nuevo...`);
+              createServer().then(resolve).catch(reject); // Intentar iniciar de nuevo
+            }
+          });
+        } else {
+          console.error('Error al iniciar el servidor:', err);
+          reject(err);
+        }
+      });
   });
 }
-
 // Función para crear la ventana de Electron
 function createWindow() {
   const win = new BrowserWindow({
@@ -548,10 +554,13 @@ function createWindow() {
 app.whenReady().then(async () => {
   try {
     await createServer(); // Completar creación del servidor antes de continuar
-    await Promise.all([
-      autoUpdater.checkForUpdatesAndNotify(),
-      createWindow()
-    ]);
+
+     autoUpdater.checkForUpdatesAndNotify(); // Asegúrate de usar await aquí
+   
+
+    // Crear la ventana
+    createWindow();
+
   } catch (error) {
     console.error('Error al iniciar la aplicación:', error.message);
     app.quit();
