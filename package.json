@@ -1,7 +1,7 @@
 {
   "name": "bio-d",
   "private": true,
-  "version": "3.0.1",
+  "version": "3.0.2",
   "main": "main.js",
   "type": "commonjs",
   "description": "Sistema de facturación e inventario de laboratorio clinico",
