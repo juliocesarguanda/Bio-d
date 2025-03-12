@@ -32,7 +32,7 @@ const images = [
 let currentImageIndex = 0;
 async function sendRequest(url, data, callback, method = 'POST') {
     try {
-        const respuesta = await fetch("http://localhost:3007/"+url, {
+        const respuesta = await fetch("/"+url, {
             method: method,
             headers: {
                 'Content-Type': 'application/json'

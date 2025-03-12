@@ -13,7 +13,7 @@ function formatearFechaISO(fechaISO) {
 
 async function sendRequest(url, data, callback, method = 'POST', isPDF = false) {
     try {
-        const respuesta = await fetch("http://localhost:3007/" + url, {
+        const respuesta = await fetch("/" + url, {
             method: method,
             headers: {
                 'Content-Type': 'application/json'

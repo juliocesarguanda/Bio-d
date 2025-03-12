@@ -2,14 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
+const moment = require('moment');
 
 router.post('/', async (req, res) => {
     try {
         // Verificar si hay un usuario en la sesión
+      
         if (!req.session.usuario) {
             return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
-
         const id_empleado = req.session.usuario.id;
         const {
             nombre, apellido, tipoCedula, cedula,

@@ -20,4 +20,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   function updateZoomLevel(zoomFactor) {
     // Lógica de zoom...
-  }
+  } 

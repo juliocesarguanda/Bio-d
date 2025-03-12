@@ -4,7 +4,7 @@
   "version": "3.0.1",
   "main": "main.js",
   "type": "commonjs",
-  "description": "Sitema de facturación e inventario de laboratorio clinico",
+  "description": "Sistema de facturación e inventario de laboratorio clinico",
   "author": "Julio Guanda <juliocesarguanda@gmail.com> (https://github.com/juliocesarguanda/Bio-d)",
   "homepage": "https://github.com/juliocesarguanda/Bio-d",
   "npmRebuild": false,
