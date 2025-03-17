@@ -4,13 +4,13 @@ const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
 
 router.post('/', async (req, res) => {
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
     try {
-        
+
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const { id } = req.body;
-        
+
         // Consulta los exámenes y su estado
         const query = `
             SELECT pe.id, e.nombre AS examen, pe.abonado, pe.precio ,e.descripcion
@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
             LEFT JOIN examen e ON pe.examen = e.id
             WHERE pe.estatus = 1 AND pe.paciente = ?
         `;
-        
+
         const resultados = await conexion(query, [id]);
 
         if (resultados.estatus !== 'éxito') {

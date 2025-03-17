@@ -1,29 +1,17 @@
 const express = require('express');
 const router = express.Router();
+const moment = require('moment');
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
 
-const moment = require('moment');
-
-function calcularEdad(fechaNacimiento) {
-    const fechaNacimientoObj = new Date(fechaNacimiento);
-    const hoy = new Date();
-    let edad = hoy.getFullYear() - fechaNacimientoObj.getFullYear();
-    const mes = hoy.getMonth() - fechaNacimientoObj.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNacimientoObj.getDate())) {
-        edad--;
-    }
-    return edad;
-}
-
 router.post('/', async (req, res) => {
-
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
-    const fechaActual =  moment().format('YYYY-MM-DD');
-
     try {
+
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
+        const fechaActual = moment().format('YYYY-MM-DD');
+
         const query = `
             SELECT pe.id AS paciente_examen_id, pe.paciente, pe.fecha AS fecha, pe.paciente_dia AS paciente_dia, 
                    eph.id AS examen_paciente_historial_id, eph.valor AS valor, eph.referencia AS referencia, 
@@ -89,7 +77,7 @@ router.post('/', async (req, res) => {
             Object.values(pacientesDia)
         );
 
-        return res.status(200).json({ estatus: 'éxito', respuesta:resultado});
+        return res.status(200).json({ estatus: 'éxito', respuesta: resultado });
 
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);

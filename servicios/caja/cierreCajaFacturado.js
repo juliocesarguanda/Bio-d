@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const PDFDocument = require('pdfkit');
+const moment = require('moment');
+const path = require('path');
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
-const PDFDocument = require('pdfkit-table');
-const moment = require('moment');
 
-const path = require('path');
 const logoPath = path.join(__dirname, '..', '..', 'dev', 'assets', 'img', 'png', 'logo_c.png');
-                
+
 const dia = {
     'Monday': 'LUNES',
     'Tuesday': 'MARTES',
@@ -37,10 +37,10 @@ const formatNumber = (number) => {
 };
 
 router.post('/', async (req, res) => {
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
     try {
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const fechaActual = moment().format('YYYY-MM-DD');
         const query = `
             SELECT *, f.fecha AS fecha, p.valor AS Bolivar, 
@@ -90,7 +90,7 @@ router.post('/', async (req, res) => {
                 .fontSize(16)
                 .fillColor('white')
                 .text(`CIERRE DE CAJA ${formattedDate}`, 0, 50, { align: 'center' })
-                
+
                 .image(logoPath, 500, 15, { width: 100 })
 
             doc.fontSize(6)

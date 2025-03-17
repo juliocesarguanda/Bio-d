@@ -1,8 +1,15 @@
-// Recargar la página al cambiar el estado del historial
-window.addEventListener('popstate', () => {
-    location.reload(); // Recarga la página
-    console.log("Página recargada");
-});
+
+document.body.addEventListener('mousedown', (event) => {
+    const allowedTags = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'];
+    
+    // Permitir si el elemento es editable o si está en la lista de elementos permitidos
+    if (
+      !allowedTags.includes(event.target.tagName) &&
+      event.target.getAttribute('contenteditable') !== 'true'
+    ) {
+      event.preventDefault();
+    }
+  });
 function formatearFechaISO(fechaISO) {
     const fecha = new Date(fechaISO);
     const year = fecha.getUTCFullYear();
@@ -10,10 +17,13 @@ function formatearFechaISO(fechaISO) {
     const day = String(fecha.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
-
+function idValue(id, value) {
+    const elemento = document.getElementById(id);
+    return elemento !== null && elemento.value == value;
+}
 async function sendRequest(url, data, callback, method = 'POST', isPDF = false) {
     try {
-        const respuesta = await fetch("/" + url, {
+        const respuesta = await fetch(`${window.location.protocol}//${window.location.hostname}:${window.location.port}/${url}`,{
             method: method,
             headers: {
                 'Content-Type': 'application/json'
@@ -35,11 +45,10 @@ async function sendRequest(url, data, callback, method = 'POST', isPDF = false) 
         callback({ estatus: 'error', respuesta: error.message });
     }
 }
-
 function generarPDF(url, data = null) {
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'http://localhost:3007/' + url;
+    form.action = `${window.location.protocol}//${window.location.hostname}:${window.location.port}/${url}`;
     form.target = '_blank';
     const input = document.createElement('input');
     input.type = 'hidden';
@@ -50,10 +59,6 @@ function generarPDF(url, data = null) {
     form.submit();
     document.body.removeChild(form);
 }
-
-
-
-
 // Función para obtener la fecha formateada
 function fecha() {
     const today = new Date();
@@ -63,26 +68,6 @@ function fecha() {
     return `_${day}-${month}-${year}`;
 }
 
-async function checkUserSession() {
-    sendRequest('login/session', {}, resultado => {
-        if (resultado.estatus === 'éxito') {
-            const usuario = resultado.respuesta.usuario;
-            const tipoUsuario = resultado.respuesta.tipo;
-
-            if (!usuario || !tipoUsuario) {
-                window.location.href = "index.html";
-            } else if (tipoUsuario != 1) {
-                const elementos = document.querySelectorAll(".admin");
-                elementos.forEach(elemento => { elemento.style.display = "none"; });
-            }
-
-            document.querySelector('.user-dropdown-header').innerHTML = usuario;
-            document.querySelector('.user-circle').innerHTML = usuario[0];
-        } else {
-            window.location.href = "index.html";
-        }
-    }, 'GET');
-}
 function showNotification(title, type) {
     const params = [{
         title: title
@@ -103,7 +88,11 @@ function showNotification(title, type) {
     const bell = new Bell(...params);
     bell.launch();
 }
-checkUserSession();
+function verificarClasePorId(id, clase) {
+    const elemento = document.getElementById(id);
+    return elemento ? elemento.classList.contains(clase) : false;
+}
+
 
 document.addEventListener('input', function (event) {
     if (event.target.tagName == 'INPUT' && event.target.classList.contains('upperCase')) {
@@ -585,8 +574,6 @@ document.addEventListener('DOMContentLoaded', function () {
         sendRequest('login/salir', {}, resultado => {
             if (resultado.estatus === 'éxito') {
                 window.location = 'index.html';
-            } else {
-                console.error('Error al cerrar sesión:', resultado.respuesta);
             }
         });
     });
@@ -1330,11 +1317,3 @@ try {
 } catch (error) {
     reportError(error.message, 'main.js', e.target, e.target.id);
 }
-
-
-
-
-
-
-
-

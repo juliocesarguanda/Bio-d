@@ -83,6 +83,6 @@ function whatsAppResultadoExames(v1, v2) {
         });
 }
 
-document.getElementById('exportarPdfWhatsAppAp').addEventListener('click', () => {
-whatsAppResultadoExames(document.getElementById('dataqrHistorial').value, document.getElementById('idExamenesResultadosHistorial').value);
-    });
+// document.getElementById('exportarPdfWhatsAppAp').addEventListener('click', () => {
+// whatsAppResultadoExames(document.getElementById('dataqrHistorial').value, document.getElementById('idExamenesResultadosHistorial').value);
+//     });

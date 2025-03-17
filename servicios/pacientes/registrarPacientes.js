@@ -2,12 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
-const moment = require('moment');
+const { scanAndSendRequests } = require('../../utilidades/mensajesInterno.js');
 
 router.post('/', async (req, res) => {
     try {
-        // Verificar si hay un usuario en la sesión
-      
         if (!req.session.usuario) {
             return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
@@ -56,7 +54,12 @@ router.post('/', async (req, res) => {
                 reportError(__filename, new Date(), resultadosInsert.respuesta, req.originalUrl, req.body);
                 return res.status(500).json({ estatus: 'error', respuesta: resultadosInsert.respuesta });
             }
-
+            scanAndSendRequests('/websocket/message', {
+                message: {
+                    codigo: '0012',
+                    socketId: req.session.usuario.socketId
+                }
+            });
             return res.status(201).json({ estatus: 'insertar', respuesta: resultadosInsert.respuesta.insertId });
         }
     } catch (error) {

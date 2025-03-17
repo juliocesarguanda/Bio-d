@@ -4,10 +4,10 @@ const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
 
 router.post('/', async (req, res) => {
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
     try {
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const query = `
             SELECT pe.*, p.nombre AS nombre, p.apellido AS apellido, p.id AS id, p.cedula AS cedula,
                    e.nombre AS tipo_examen, tc.tipo AS tipo_cedula, COUNT(e.id) AS cantidad_examenes, sx.valor AS sexo, SUM(pe.abonado) AS total_abonado, 
@@ -33,14 +33,14 @@ router.post('/', async (req, res) => {
             const estado = mostrar.total_abonado >= mostrar.total_precio ? 1 : 0;
             return {
                 estado: estado,
-                id: mostrar.id, 
-                abonado: mostrar.abonado, 
+                id: mostrar.id,
+                abonado: mostrar.abonado,
                 fecha: new Date(mostrar.fecha).toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-                hora: mostrar.hora, 
-                tipo_examen: cantidadExamenes == 1 ? mostrar.tipo_examen : cantidadExamenes, 
-                paciente: mostrar.paciente, 
-                nombre: mostrar.nombre, 
-                apellido: mostrar.apellido, 
+                hora: mostrar.hora,
+                tipo_examen: cantidadExamenes == 1 ? mostrar.tipo_examen : cantidadExamenes,
+                paciente: mostrar.paciente,
+                nombre: mostrar.nombre,
+                apellido: mostrar.apellido,
                 cedula: mostrar.cedula,
                 tipo_cedula: mostrar.tipo_cedula,
                 sexo: mostrar.sexo

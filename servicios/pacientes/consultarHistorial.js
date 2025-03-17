@@ -4,16 +4,16 @@ const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
 
 router.post('/', async (req, res) => {
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
-    const { id } = req.body;
-
-    if (!id) {
-        return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
-    }
-
     try {
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
+        const { id } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
+        }
+
         const sql = `
             SELECT pe.id, hp.fecha, e.nombre AS examen, eph.valor, eph.referencia, em.nombre, em.apellido
             FROM paciente_examen pe

@@ -2,14 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
+const { scanAndSendRequests } = require('../../utilidades/mensajesInterno.js');
 
 router.post('/', async (req, res) => {
-    // Verificar si hay un usuario en la sesión
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
-
     try {
+        // Verificar si hay un usuario en la sesión
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
+
         const { valorIdPacienteDelete } = req.body;
 
         if (!valorIdPacienteDelete) {
@@ -24,6 +25,13 @@ router.post('/', async (req, res) => {
             return res.status(500).json({ estatus: 'error', respuesta: 'Error al eliminar el paciente' });
         }
 
+        scanAndSendRequests('/websocket/message', {
+            message: {
+                codigo: '0014',
+                socketId: req.session.usuario.socketId,
+                id: valorIdPacienteDelete
+            }
+        });
         res.json({ estatus: 'exito', respuesta: 'Paciente eliminado correctamente' });
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);

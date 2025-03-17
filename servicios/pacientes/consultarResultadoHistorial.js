@@ -11,16 +11,16 @@ function calcularEdad(fechaNacimiento) {
 }
 
 router.post('/', async (req, res) => {
-  const { examen_id } = req.body;
-  
-  if (!req.session.usuario) {
-    return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-}
-  if (!examen_id) {
-    return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
-  }
 
   try {
+    const { examen_id } = req.body;
+
+    if (!req.session.usuario) {
+      return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+    }
+    if (!examen_id) {
+      return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
+    }
     const sql = `SELECT pe.id AS paciente_examen_id, 
                 pe.paciente, 
                 pe.fecha AS fecha, 
@@ -65,22 +65,22 @@ router.post('/', async (req, res) => {
               )`;
 
     const result = await conexion(sql, [examen_id]);
-    
+
     if (result.estatus !== 'éxito') {
       throw new Error('Error al obtener el historial');
     }
 
     const resultData = result.respuesta;
-    
+
     if (resultData.length === 0) {
-      return res.json({estatus: 'error', respuesta:'no se encontraron resultados'});
+      return res.json({ estatus: 'error', respuesta: 'no se encontraron resultados' });
     }
 
     // Agrupar exámenes y análisis
     const examenesMap = {};
     resultData.forEach(dato => {
       const examenId = dato.paciente_examen_id;
-      
+
       if (!examenesMap[examenId]) {
         examenesMap[examenId] = {
           id_examen: examenId,
@@ -88,7 +88,7 @@ router.post('/', async (req, res) => {
           analisis: []
         };
       }
-      
+
       if (dato.nombreAnalisis) {
         examenesMap[examenId].analisis.push({
           nombre: dato.nombreAnalisis,
@@ -100,10 +100,10 @@ router.post('/', async (req, res) => {
 
     // Datos generales
     const primerRegistro = resultData[0];
-    const factura = primerRegistro.precio === 0 
-      ? 'exonerado' 
-      : primerRegistro.numero === null 
-        ? 'N/A' 
+    const factura = primerRegistro.precio === 0
+      ? 'exonerado'
+      : primerRegistro.numero === null
+        ? 'N/A'
         : primerRegistro.numero;
 
     const datos = {
@@ -122,7 +122,7 @@ router.post('/', async (req, res) => {
       factura: factura
     };
 
-    res.json({ estatus: 'éxito', respuesta:datos });
+    res.json({ estatus: 'éxito', respuesta: datos });
 
   } catch (error) {
     reportError(__filename, new Date(), error.message, req.originalUrl, req.body);

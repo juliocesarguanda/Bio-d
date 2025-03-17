@@ -6,52 +6,63 @@ const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 const fs = require('fs-extra');
+const { Server } = require('socket.io');
+const http = require('http');
 
-autoUpdater.on('update-available', () => {
-  console.log('Actualización disponible.');
+const serverApp = express();
+const port = 3007;
+const corsOptions = {
+  origin: '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  optionsSuccessStatus: 204
+};
+const faviconPath = path.join(__dirname, 'dev/assets/img/icon.ico');
+const server = http.createServer(serverApp);
+const io = new Server(server, {
+  cors: {
+    origin: '*' // Ajusta esto en producción
+  }
 });
 
-autoUpdater.on('update-not-available', () => {
-  console.log('No hay actualizaciones disponibles.');
-});
+function sendMessage(message) {
+  io.emit('message', message);
+}
 
-autoUpdater.on('error', (error) => {
-  console.error('Error en autoUpdater:', error.message);
-});
+// autoUpdater.on('update-available', () => {
+//   console.log('Actualización disponible.');
+// });
+
+// autoUpdater.on('update-not-available', () => {
+//   console.log('No hay actualizaciones disponibles.');
+// });
+
+// autoUpdater.on('error', (error) => {
+//   console.error('Error en autoUpdater:', error.message);
+// });
 
 autoUpdater.on('update-downloaded', () => {
   dialog.showMessageBox({
-      type: 'info',
-      title: 'Actualización lista',
-      message: 'Se descargó una actualización. ¿Reiniciar ahora? Recuerda que se reiniciará la aplicación.',
-      buttons: ['Reiniciar', 'Posponer']
+    type: 'info',
+    title: 'Actualización lista',
+    message: 'Se descargó una actualización. ¿Reiniciar ahora? Recuerda que se reiniciará la aplicación.',
+    buttons: ['Reiniciar', 'Posponer']
   }).then((result) => {
-      if (result.response === 0) {
-          autoUpdater.quitAndInstall();
-      }
+    if (result.response === 0) {
+      autoUpdater.quitAndInstall();
+    }
   });
 });
 
 
 // Función para configurar y crear el servidor Express
 function createServer() {
-  const serverApp = express();
 
-  const defaultPort = 3007; // Puerto por defecto
-  const port = defaultPort;
-
-  const corsOptions = {
-    origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    optionsSuccessStatus: 204
-  };
-
-  // Ruta al favicon
-  const faviconPath = path.join(__dirname, 'dev/assets/img/icon.ico');
-
-  // Configuración del servidor
   serverApp.use('/favicon.ico', (req, res) => {
     res.sendFile(faviconPath);
+  });
+  serverApp.use((req, res, next) => {
+    if (req.path.includes('/socket.io')) return next();
+    express.json()(req, res, next);
   });
   serverApp.use('/dev', express.static(path.join(__dirname, 'dev')));
   serverApp.use(cors(corsOptions));
@@ -84,7 +95,6 @@ function createServer() {
         const ruta = require(fullPath);
         const rutaCargada = `${basePath}/${path.basename(fullPath, '.js')}`;
         serverApp.use(rutaCargada, ruta);
-        console.log(`Ruta cargada: ${rutaCargada}`);
       }
     });
   };
@@ -137,7 +147,7 @@ function createServer() {
 
   // Iniciar el servidor y devolver una promesa
   return new Promise((resolve, reject) => {
-    serverApp
+    server
       .listen(port, () => {
         console.log(`Servidor corriendo en el puerto ${port}`);
         resolve();
@@ -229,13 +239,9 @@ function createWindow() {
 
 
 
-  win.loadURL('http://localhost:3007/dev/index.html');
+  win.loadURL(`http://localhost:${port}/dev/index.html`);
   Menu.setApplicationMenu(null);
   win.maximize();
-
-
-
-  // Inyectar la barra de título personalizada y estilos
   win.webContents.on('did-finish-load', () => {
     // HTML de la barra de título personalizada
     const titleBarHtml = `
@@ -495,8 +501,6 @@ function createWindow() {
 
     `);
   });
-
-
   win.webContents.setZoomFactor(1.0); // Establecer zoom inicial en 100%
   win.webContents.send('update-zoom-level', 1.0);
   // Registrar atajos de teclado para el zoom
@@ -554,9 +558,9 @@ app.whenReady().then(async () => {
   try {
     await createServer(); // Completar creación del servidor antes de continuar
 
-     autoUpdater.checkForUpdatesAndNotify(); // Asegúrate de usar await aquí
-   
+    autoUpdater.checkForUpdatesAndNotify(); // Asegúrate de usar await aquí
 
+    // resolve(io);
     // Crear la ventana
     createWindow();
 
@@ -574,14 +578,18 @@ app.whenReady().then(async () => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     console.log('Cerrando aplicación...');
-  
 
-      app.quit();
-      globalShortcut.unregisterAll();
+
+    app.quit();
+    globalShortcut.unregisterAll();
     // Forzar cierre después de 5 segundos
     setTimeout(() => {
       console.log('Forzando cierre...');
+
+    app.quit();
+    globalShortcut.unregisterAll();
       process.exit(1);
-    }, 5000);
+    }, 1000);
   }
 });
+module.exports = { sendMessage, port };

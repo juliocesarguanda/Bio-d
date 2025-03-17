@@ -87,7 +87,7 @@ function tablaPendientes() {
 
 
 document.getElementById('pacientePendiente').addEventListener('click', () => {
-	tablaPendientes()
+	tablaPendientes();
 });
 
 
@@ -235,8 +235,6 @@ function generateQRCodeConsult(v) {
 		canvas.style.display = "block";
 	};
 }
-
-
 
 function toggleAlert(button) {
 	const inputContainer = button.nextElementSibling;

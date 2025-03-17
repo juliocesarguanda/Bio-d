@@ -1,7 +1,7 @@
 {
   "name": "bio-d",
   "private": true,
-  "version": "3.0.2",
+  "version": "3.1.0",
   "main": "main.js",
   "type": "commonjs",
   "description": "Sistema de facturación e inventario de laboratorio clinico",
@@ -31,6 +31,7 @@
     "electron-log": "^5.3.0",
     "electron-updater": "^6.3.9",
     "eslint": "^9.21.0",
+    "exceljs": "^4.4.0",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "express-session": "^1.18.1",
@@ -38,14 +39,16 @@
     "fs-extra": "^9.1.0",
     "globals": "^16.0.0",
     "helmet": "^8.0.0",
+    "http": "^0.0.1-security",
     "moment": "^2.30.1",
     "mysql2": "^3.12.0",
     "nmap": "^1.1.0",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.0",
+    "p-queue": "^8.1.0",
     "pdfkit": "^0.16.0",
-    "pdfkit-table": "^0.1.99",
     "ping": "^0.4.4",
+    "socket.io": "^4.8.1",
     "sqlite3": "^5.1.7",
     "ws": "^8.18.1"
   },
@@ -82,7 +85,7 @@
           ]
         }
       ],
-    "artifactName": "${productName}-Setup-${version}.${ext}",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
       "icon": "dev/assets/img/icon.ico"
     },
     "linux": {

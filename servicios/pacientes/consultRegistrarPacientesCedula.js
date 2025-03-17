@@ -4,14 +4,14 @@ const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
 
 router.post('/', async (req, res) => {
-    // Verificar si hay un usuario en la sesión
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
-
     try {
+        // Verificar si hay un usuario en la sesión
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
+
         const { cedula, tipoCedula } = req.body;
-            const query = `
+        const query = `
             SELECT nombre, apellido, telefono, DATE_FORMAT(fecha_nacimiento, '%Y-%m-%d') AS fecha, 
                    convenio, tipo_paciente AS paciente, sexo 
             FROM paciente 
@@ -31,8 +31,6 @@ router.post('/', async (req, res) => {
                 res.json({ estatus: 'éxito', respuesta: paciente });
             }
         }
-
-
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
         res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar los datos: ' + error.message });

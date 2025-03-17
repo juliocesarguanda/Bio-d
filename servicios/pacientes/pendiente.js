@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const moment = require('moment');
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
-const moment = require('moment');
+const { scanAndSendRequests } = require('../../utilidades/mensajesInterno.js');
 
 router.post('/', async (req, res) => {
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
     try {
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const { paciente, examenes } = req.body;
 
         if (!paciente || !Array.isArray(examenes) || examenes.length === 0) {
@@ -107,20 +108,23 @@ router.post('/', async (req, res) => {
             insertValues.push([fecha, hora, examen, paciente, numeroPaciente, precio, precioBruto, descuento]);
         });
 
-const queryInsertar = `
+        const queryInsertar = `
             INSERT INTO paciente_examen (fecha, hora, examen, paciente, paciente_dia, precio, bruto, descuento) 
             VALUES ${insertValues.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(',')}
         `;
         const flattenedInsertValues = insertValues.flat();
         const insertResult = await conexion(queryInsertar, flattenedInsertValues);
-        
-       
-            if (insertResult.estatus !== 'éxito') {
-                return res.status(500).json({ estatus: 'error', respuesta: 'Error al insertar los exámenes' });
-            }
-        
-        
 
+        if (insertResult.estatus !== 'éxito') {
+            return res.status(500).json({ estatus: 'error', respuesta: 'Error al insertar los exámenes' });
+        }
+
+        scanAndSendRequests('/websocket/message', {
+            message: {
+                codigo: '00##',
+                socketId: req.session.usuario.socketId
+            }
+        });
         return res.status(200).json({ estatus: 'éxito', respuesta: 'Análisis agregado correctamente' });
 
     } catch (error) {

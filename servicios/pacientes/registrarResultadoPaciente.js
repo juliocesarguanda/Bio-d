@@ -1,20 +1,23 @@
 const express = require('express');
 const router = express.Router();
+const moment = require('moment');
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
-const moment = require('moment');
+const { scanAndSendRequests } = require('../../utilidades/mensajesInterno.js');
 
 router.post('/', async (req, res) => {
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
-    const { idPaciente, remitida, resultadoPacientes, servicio, note = '', resultadoPacientesAlert } = req.body;
 
-    if (!idPaciente || !remitida || !resultadoPacientes || !servicio) {
-        return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
-    }
 
     try {
+
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
+        const { idPaciente, remitida, resultadoPacientes, servicio, note = '', resultadoPacientesAlert } = req.body;
+
+        if (!idPaciente || !remitida || !resultadoPacientes || !servicio) {
+            return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
+        }
         // Obtener el id del empleado analista
         const sqlAnalista = `
             SELECT valor 
@@ -138,7 +141,7 @@ router.post('/', async (req, res) => {
         }
 
         let resultado = 'listo';
-        if(resultVerificaAbonado.respuesta.length > 0){
+        if (resultVerificaAbonado.respuesta.length > 0) {
             resultado = 'falta';
         }
         // Actualizar reactivos
@@ -186,7 +189,7 @@ router.post('/', async (req, res) => {
         `;
 
         for (row of datosReactivo) {
-            const result = await conexion(sqlUpdateReactivo, [ row.id]);
+            const result = await conexion(sqlUpdateReactivo, [row.id]);
             if (result.estatus !== 'éxito') {
                 throw new Error('Error al actualizar reactivo');
             }
@@ -197,7 +200,13 @@ router.post('/', async (req, res) => {
                 throw new Error('Error al actualizar miscelaneo');
             }
         }
-
+        scanAndSendRequests('/websocket/message', {
+            message: {
+                codigo: '0016',
+                socketId: req.session.usuario.socketId,
+                id: idPaciente
+            }
+        });
         res.json({ estatus: resultado });
 
     } catch (error) {

@@ -30,9 +30,9 @@ const images = [
 
 ];
 let currentImageIndex = 0;
-async function sendRequest(url, data, callback, method = 'POST') {
+async function sendRequest(url, data, callback, method = 'POST', isPDF = false) {
     try {
-        const respuesta = await fetch("/"+url, {
+        const respuesta = await fetch(`${window.location.protocol}//${window.location.hostname}:${window.location.port}/${url}`,{
             method: method,
             headers: {
                 'Content-Type': 'application/json'
@@ -40,24 +40,20 @@ async function sendRequest(url, data, callback, method = 'POST') {
             body: method === 'POST' ? JSON.stringify(data) : undefined
         });
 
-        // Intentar convertir la respuesta a JSON independientemente del código de estado
-        const result = await respuesta.json().catch(() => null);
-
-        if (!respuesta.ok) {
-            const error = new Error('Error en la solicitud: ' + respuesta.estatusText);
-            error.estatus = respuesta.estatus;
-            error.result = result;
-            throw error;
+        if (isPDF) {
+            if (!respuesta.ok) {
+                return respuesta.json().then(err => { throw new Error(err.respuesta); });
+            }
+            const blob = await respuesta.blob();
+            callback(blob);
+        } else {
+            const result = await respuesta.json().catch(() => null);
+            callback(result);
         }
-
-        // Llamar a la función de callback con el resultado
-        callback(result);
     } catch (error) {
-        // Suprimir la salida de error en la consola
-        callback({ status: error.result?.estatus || 'error', respuesta: error.result?.respuesta || 'Error en la solicitud' });
+        callback({ estatus: 'error', respuesta: error.message });
     }
 }
-
 
 
 // Función para cambiar la imagen de fondo
@@ -70,11 +66,7 @@ function changeImage() {
     }, 250);
 }
 
-// Recargar la página al cambiar el estado del historial
-window.addEventListener('popstate', () => {
-    location.reload(); // Recarga la página
-    console.log("Página recargada");
-});
+
 
 // Establecer imagen inicial
 changeImage(); 

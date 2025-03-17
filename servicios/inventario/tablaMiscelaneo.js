@@ -5,12 +5,12 @@ const { reportError } = require('../../utilidades/reporte.js');
 
 // Ruta para obtener la lista de misceláneos
 router.get('/', async (req, res) => {
-    // Verificar si hay un usuario en la sesión
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
 
     try {
+        // Verificar si hay un usuario en la sesión
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const query = 'SELECT * FROM miscelaneo WHERE estatus = 1';
         const resultados = await conexion(query, []);
 

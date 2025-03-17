@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const PDFDocument = require('pdfkit');
+const moment = require('moment');
+const path = require('path');
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
-const path = require('path');
 const logoPath = path.join(__dirname, '..', '..', 'dev', 'assets', 'img', 'png', 'logo_c.png');
-const PDFDocument = require('pdfkit-table');
-const moment = require('moment');
+const fechaActual = moment().format('YYYY-MM-DD');
 
 const dia = {
     'Monday': 'LUNES',
@@ -36,11 +37,10 @@ const formatNumber = (number) => {
 };
 
 router.post('/', async (req, res) => {
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
     try {
-        const fechaActual = moment().format('YYYY-MM-DD');
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const query = `
             SELECT *, f.fecha AS fecha, p.valor AS Bolivar, 
             f.numeo_paciente_dia AS numeroPaciente, pa.nombre AS pa_nombre, 
@@ -81,7 +81,7 @@ router.post('/', async (req, res) => {
         let startY = 100;
         const drawHeader = (pageNumber) => {
 
-        let startY = 100;
+            let startY = 100;
             doc.save()
                 .rect(0, 0, doc.page.width, 80)
                 .fill('#2196F3')
@@ -201,7 +201,7 @@ router.post('/', async (req, res) => {
         // // Procesar datos principales
         startY = start;
         resultados.respuesta.forEach((row) => {
-           if (inde > 28) {
+            if (inde > 28) {
                 inde = 0
                 doc.addPage();
                 currentPage++;

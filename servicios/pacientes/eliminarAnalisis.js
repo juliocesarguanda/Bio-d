@@ -2,18 +2,19 @@ const express = require('express');
 const router = express.Router();
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
+const { scanAndSendRequests } = require('../../utilidades/mensajesInterno.js');
 
 router.post('/', async (req, res) => {
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
-    const { nombre } = req.body;
-
-    if (!nombre || !Array.isArray(nombre)) {
-        return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
-    }
-
     try {
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
+        const { nombre } = req.body;
+
+        if (!nombre || !Array.isArray(nombre)) {
+            return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
+        }
+
         // Actualizar estatus de los exámenes seleccionados
         const sqlUpdate = `
             UPDATE paciente_examen
@@ -71,6 +72,12 @@ router.post('/', async (req, res) => {
             if (devolucion <= 0) break;
         }
 
+        scanAndSendRequests('/websocket/message', {
+            message: {
+                codigo: '00##',
+                socketId: req.session.usuario.socketId
+            }
+        });
         if (devolucion > 0) {
             res.json({ estatus: 'exito', respuesta: `Análisis eliminados correctamente y con ${devolucion} BS de devolución` });
         } else {

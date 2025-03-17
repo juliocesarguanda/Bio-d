@@ -1,204 +1,169 @@
-const ws = new WebSocket(`ws://${window.location.hostname}:7667`);
-ws.onclose = (event) => {
-    if (event.code === 1006) {
-        fetch('src/servicios/WebSocket/server_WebSocket.php', {
-            method: 'POST',
-            body: JSON.stringify({ data: 'WebSocket' }), // Assuming data needs to be JSON
-        })
-            .then((response) => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    console.error('Failed server WebSocket:', response.statusText);
+const port = window.location.port || (window.location.protocol === 'https:' ? 443 : 80);
+let socketId;
+const socket = io(`ws://${window.location.hostname}:${port}`, {
+    path: "/socket.io/",
+    transports: ['websocket'],
+    reconnectionDelay: 1000,
+    auth: {
+        token: "cliente-electron"
+    }
+});
+function checkUserSession(socketId) {
+    sendRequest('login/session', { id: socketId }, resultado => {
+        if (resultado.estatus === 'éxito') {
+            const usuario = resultado.respuesta.usuario;
+            const tipoUsuario = resultado.respuesta.tipo;
+
+            if (!usuario || !tipoUsuario) {
+                window.location.href = "index.html";
+            } else if (tipoUsuario != 1) {
+                const elementos = document.querySelectorAll(".admin");
+                elementos.forEach(elemento => { elemento.style.display = "none"; });
+            }
+
+            document.querySelector('.user-dropdown-header').innerHTML = usuario;
+            document.querySelector('.user-circle').innerHTML = usuario[0];
+        } else {
+            window.location.href = "index.html";
+        }
+    });
+}
+socket.on('connect', () => {
+    socketId = socket.id;
+    checkUserSession(socketId);
+});
+
+socket.on('disconnect', () => {
+    window.location.href = "index.html";
+});
+
+
+socket.on('message', (socketData) => {
+
+    console.table(socketData)
+    console.log(socketId);
+
+    if (socketData.codigo == '0001') {
+        sendRequest('login/session', { id: socketId }, resultado => {
+            if (resultado.estatus === 'éxito') {
+                const tipoUsuario = resultado.respuesta.tipo;
+                if (socketData.tipo != 1 || tipoUsuario == 1) {
+                    showNotification('El usuario ' + socketData.usuario + ' a iniciado seción', 'info');
                 }
-            })
-            .catch((error) => {
-                console.error('Error server WebSocket:', error);
-            });
-    }
-};
+            }
+        });
+    } else if (socketData.socketId != socketId) {
+        if (socketData.codigo == '0002') {
+            consultarAlertasMiscelaneos();
+            showNotification('Nuevo Miscelaneo', 'info');
+            if (verificarClasePorId('miscelaneo_inventario', 'selected')) {
+                tablaMiscelaneo();
+            } if (verificarClasePorId('registrarAnalisisModal', 'show') || verificarClasePorId('analisisEditModal', 'show')) {
+                selectDeMiscelaneos2('configuracion/consultMiscelaneo', 'modalTableBodyMiscelaneos', 'consultar', 'checkM', false);
+            }
+        } else if (socketData.codigo == '0003') {
+            consultarAlertas();
+            showNotification('Nuevo Reactivo', 'info');
+            if (verificarClasePorId('reactivo_inventario', 'selected')) {
+                tablaReactivo();
+            } if (verificarClasePorId('registrarAnalisisModal', 'show') || verificarClasePorId('analisisEditModal', 'show')) {
+                selectDeReactivos();
+            }
+        } else if (socketData.codigo == '0004') {
+            consultarAlertasMiscelaneos();
+            showNotification('Miscelaneo nuevo lote', 'info');
+            if (verificarClasePorId('miscelaneo_inventario', 'selected')) {
+                tablaMiscelaneo();
+            } if (verificarClasePorId('registrarAnalisisModal', 'show') || verificarClasePorId('analisisEditModal', 'show')) {
+                selectDeMiscelaneos2('configuracion/consultMiscelaneo', 'modalTableBodyMiscelaneos', 'consultar', 'checkM', false);
+            } if (idValue('valorEditarMiscelaneoId',socketData.id) && verificarClasePorId('miscelaneoEditModal', 'show')) {
+                modalClose('miscelaneoEditModal')
+            } 
+        } else if (socketData.codigo == '0005') {
+            consultarAlertas();
+            showNotification('Reactivo nuevo lote', 'info');
+            if (verificarClasePorId('reactivo_inventario', 'selected')) {
+                tablaReactivo();
+            } if (verificarClasePorId('registrarAnalisisModal', 'show') || verificarClasePorId('analisisEditModal', 'show')) {
+                selectDeReactivos();
+            } if (idValue('valorEditarReactivoId',socketData.id) && verificarClasePorId('reactivoEditModal', 'show')) {
+                modalClose('reactivoEditModal')
+            } 
 
+        } else if (socketData.codigo == '0006' || socketData.codigo == '0008') {
+            consultarAlertas();
+            showNotification('Reactivo eliminado', 'info');
+            if (verificarClasePorId('reactivo_inventario', 'selected')) {
+                tablaReactivo();
+            } if (verificarClasePorId('registrarAnalisisModal', 'show') || verificarClasePorId('analisisEditModal', 'show')) {
+                selectDeReactivos();
+            } if (idValue('valorEditarReactivoId',socketData.id) && verificarClasePorId('reactivoEditModal', 'show')) {
+                modalClose('reactivoEditModal')
+            } 
+        } else if (socketData.codigo == '0007' || socketData.codigo == '0009') {
+            consultarAlertasMiscelaneos();
+            showNotification('Miscelaneo eliminado', 'info');
+            if (verificarClasePorId('miscelaneo_inventario', 'selected')) {
+                tablaMiscelaneo();
+            } if (verificarClasePorId('registrarAnalisisModal', 'show') || verificarClasePorId('analisisEditModal', 'show')) {
+                selectDeMiscelaneos2('configuracion/consultMiscelaneo', 'modalTableBodyMiscelaneos', 'consultar', 'checkM', false);
+            } if (idValue('valorEditarMiscelaneoId',socketData.id) && verificarClasePorId('miscelaneoEditModal', 'show')) {
+                modalClose('miscelaneoEditModal')
+            } 
+        } else if (socketData.codigo == '0010') {
+            consultarAnalista();
+            showNotification('Se actualizo analista de turno', 'info');
+        } else if (socketData.codigo == '0011') {
+            consultarFeriados();
+            showNotification('Se actualizo día feriado', 'info');
+        } else if (socketData.codigo == '0012') {
+            showNotification('Nuevo paciente Registrado', 'info');
+            if (verificarClasePorId('pacienteConsultar', 'selected')) {
+                tablaPaciente();
+            }
+        } else if (socketData.codigo == '0013') {
+            showNotification('Paciente Actualizado', 'info');
+            if (verificarClasePorId('pacienteConsultar', 'selected')) {
+                tablaPaciente();
+            } if(idValue('idUpdate',socketData.id) && verificarClasePorId('updatePacientesModal', 'show')){
+                tablaPaciente();
+                modalClose('updatePacientesModal')
+            }
+        } else if (socketData.codigo == '0014') {
+            showNotification('Paciente eliminado', 'info');
+            if (verificarClasePorId('pacienteConsultar', 'selected')) {
+                tablaPaciente();
+            } if(idValue('idUpdate',socketData.id) && verificarClasePorId('pacienteDeleteModal', 'show')){
+                tablaPaciente();
+                modalClose('pacienteDeleteModal')
+            } if(idValue('idUpdate',socketData.id) && verificarClasePorId('updatePacientesModal', 'show')){
+                tablaPaciente();
+                modalClose('updatePacientesModal')
+            }
+        } else if (socketData.codigo == '0015') {
+            showNotification('Nuevo examen pendiente', 'info');
+            if (verificarClasePorId('pacientePendiente', 'selected')) {
+                tablaPendientes();
+            }
 
+        } else if (socketData.codigo == '0016') {
+            showNotification('Un examen procesado', 'info');
+            if (verificarClasePorId('pacientePendiente', 'selected')) {
+                tablaPendientes();
+            } if (idValue('idPacienteResultadRemitida',socketData.id) && verificarClasePorId('resultadoPacientesModal', 'show')) {
+                modalClose('resultadoPacientesModal')
+            }
+        } else if (socketData.codigo == '0017') {
+            showNotification('Miscelaneo eliminado', 'info');
+        } else if (socketData.codigo == '0018') {
+            showNotification('Miscelaneo eliminado', 'info');
+        } else if (socketData.codigo == '0019') {
+            showNotification('Miscelaneo eliminado', 'info');
+        } else if (socketData.codigo == '0020') {
+            showNotification('Miscelaneo eliminado', 'info');
+        } else if (socketData.codigo == '0021') {
 
-ws.onmessage = (event) => {
-    let onmessage = event.data.split('#');
-    let local = window.location.pathname.split('/').pop();
-
-    // un usuario a iniciado cesión
-    if (onmessage[0] == '0001') {
-      
-            const params = [{
-                title: 'El usuario ' + onmessage[1] + ' a iniciado cesión'
-                },
-                'info',
-                {
-                animate: true,
-                isColored: true,
-                screenTime: '15000',
-                transitionDuration: '500',
-                position: 'bottom-right',
-                typeAnimation: 'fade-in',
-                expand: false,
-                theme: 'gradient',
-                timeline: true,
-                removeOn: 'click'
-                }]
-                const bell = new Bell(...params)
-                bell.launch()
-    }
-
-    else if ((local == 'inventario.php') && (userActive != onmessage[1])) {
-        // actualizarMiscelaneo o eliminarMiscelaneo
-        if (((onmessage[0] == '0002') || (onmessage[0] == '0004')) && (((document.getElementById('valorEditarMiscelaneoId').value == onmessage[2]) && (document.getElementById('modalMiscelaneoEditar').checked == true)) || ((document.getElementById('valorEliminarMiscelaneoId').value == onmessage[2]) && (document.getElementById('modalMiscelaneoEliminar').checked == true)))) {
-            tablaMiscelanio();
-            document.getElementById('modalMiscelaneoEditar').checked = false;
-            document.getElementById('modalMiscelaneoEliminar').checked = false;
-           
-                const params = [{
-                    title: "Otro usuario modifico " + onmessage[3]
-                    },
-                    'info',
-                    {
-                    animate: true,
-                    isColored: true,
-                    screenTime: '15000',
-                    transitionDuration: '500',
-                    position: 'bottom-right',
-                    typeAnimation: 'fade-in',
-                    expand: false,
-                    theme: 'gradient',
-                    timeline: true,
-                    removeOn: 'click'
-                    }]
-                    const bell = new Bell(...params)
-                    bell.launch()
-        }
-        // registrarMiscelaneos
-        else if (onmessage[0] == '0003') {
-            tablaMiscelanio();
-            
-                const params = [{
-                    title: "Nuevo Miscelaneo"
-                    },
-                    'info',
-                    {
-                    animate: true,
-                    isColored: true,
-                    screenTime: '15000',
-                    transitionDuration: '500',
-                    position: 'bottom-right',
-                    typeAnimation: 'fade-in',
-                    expand: false,
-                    theme: 'gradient',
-                    timeline: true,
-                    removeOn: 'click'
-                    }]
-                    const bell = new Bell(...params)
-                    bell.launch()
-
-        }
-
-
-        // actualizarReactivo o eliminarReactivo 
-        if (((onmessage[0] == '0005') || (onmessage[0] == '0007')) && (((document.getElementById('valorEditarReactivoId').value == onmessage[2]) && (document.getElementById('modalReactivosEditar').checked == true)) || ((document.getElementById('valorEliminarReactivoId').value == onmessage[2]) && (document.getElementById('modalReactivoEliminar').checked == true)))) {
-            tablaReactivo();
-            document.getElementById('modalReactivosEditar').checked = false;
-            document.getElementById('modalReactivoEliminar').checked = false;
-
-                const params = [{
-                    title: "Otro usuario modifico " + onmessage[3]
-                    },
-                    'info',
-                    {
-                    animate: true,
-                    isColored: true,
-                    screenTime: '15000',
-                    transitionDuration: '500',
-                    position: 'bottom-right',
-                    typeAnimation: 'fade-in',
-                    expand: false,
-                    theme: 'gradient',
-                    timeline: true,
-                    removeOn: 'click'
-                    }]
-                    const bell = new Bell(...params)
-                    bell.launch()
-        }
-        // registrarReactivo
-        else if (onmessage[0] == '0006') {
-            tablaReactivo();
-            
-                const params = [{
-                    title: "Nuevo Reactivo"
-                    },
-                    'info',
-                    {
-                    animate: true,
-                    isColored: true,
-                    screenTime: '15000',
-                    transitionDuration: '500',
-                    position: 'bottom-right',
-                    typeAnimation: 'fade-in',
-                    expand: false,
-                    theme: 'gradient',
-                    timeline: true,
-                    removeOn: 'click'
-                    }]
-                    const bell = new Bell(...params)
-                    bell.launch()
         }
     }
 
-    else if ((local == 'parametros.php') && (userActive != onmessage[1])) {
-        // actualizarExamen o eliminarExamen
-        if (((onmessage[0] == '0008') || (onmessage[0] == '0010')) && (((document.getElementById('valorEditarExamenId').value == onmessage[2]) && (document.getElementById('modalExamenEditar').checked == true)) || ((document.getElementById('valorEliminarExamenId').value == onmessage[2]) && (document.getElementById('modalExamenEliminar').checked == true)))) {
-            tablaExamen();
-            document.getElementById('modalExamenEditar').checked = false;
-            document.getElementById('modalExamenEliminar').checked = false;
-
-                const params = [{
-                    title: "Otro usuario modifico " + onmessage[3]
-                    },
-                    'info',
-                    {
-                    animate: true,
-                    isColored: true,
-                    screenTime: '15000',
-                    transitionDuration: '500',
-                    position: 'bottom-right',
-                    typeAnimation: 'fade-in',
-                    expand: false,
-                    theme: 'gradient',
-                    timeline: true,
-                    removeOn: 'click'
-                    }]
-                    const bell = new Bell(...params)
-                    bell.launch()
-
-        }
-        // registrarExamen
-        else if (onmessage[0] == '0009') {
-            tablaExamen();
-          
-                const params = [{
-                    title: "Nuevo examen"
-                    },
-                    'info',
-                    {
-                    animate: true,
-                    isColored: true,
-                    screenTime: '15000',
-                    transitionDuration: '500',
-                    position: 'bottom-right',
-                    typeAnimation: 'fade-in',
-                    expand: false,
-                    theme: 'gradient',
-                    timeline: true,
-                    removeOn: 'click'
-                    }]
-                    const bell = new Bell(...params)
-                    bell.launch()
-        }
-
-    }
-};
+});

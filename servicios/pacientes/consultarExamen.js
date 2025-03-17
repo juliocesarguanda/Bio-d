@@ -10,10 +10,10 @@ function formatNumber(number) {
 }
 
 router.post('/', async (req, res) => {
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
     try {
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const { id } = req.body;
         const currentHour = new Date().getHours();
         const currentDate = moment().format('YYYY-MM-DD'); // Obtiene la fecha actual en formato YYYY-MM-DD

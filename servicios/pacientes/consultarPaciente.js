@@ -4,12 +4,12 @@ const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
 
 router.get('/', async (req, res) => {
-    // Verificar si hay un usuario en la sesión
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
-
     try {
+        // Verificar si hay un usuario en la sesión
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
+
         const query = `
             SELECT p.*, p.nombre AS nombre, p.apellido AS apellido, p.cedula AS cedula, p.fecha_nacimiento AS fecha_nacimiento, p.telefono AS telefono, p.id AS id, 
             tc.tipo AS tipo_cedula, tc.id AS tipo_cedulaId, c.id AS convenio, t.id AS tipo_paciente, sx.valor AS sexo, sx.id AS sexoId

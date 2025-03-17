@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const PDFDocument = require('pdfkit-table');
+const PDFDocument = require('pdfkit');
+const { Buffer } = require('buffer');
+const path = require('path');
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
-const { Buffer } = require('buffer');
 
-const path = require('path');
 const logoPath = path.join(__dirname, '..', '..', 'dev', 'assets', 'img', 'png', 'logo.png');
 // Configuración de medidas
 const mmToPoints = (mm) => mm * 2.83465;
@@ -29,6 +29,9 @@ function calcularEdad(fechaNacimiento) {
 
 router.post('/', async (req, res) => {
     try {
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const { idResultado, qr } = JSON.parse(req.body.data);
         if (!idResultado || !qr) return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
         // Obtener datos del resultado
@@ -199,14 +202,8 @@ router.post('/', async (req, res) => {
             // Avanza a la siguiente fila
             startY += maxHeight + cellPadding * 2;
             startX = 30;
-
         });
-
-
-
-
         doc.end();
-
     } catch (error) {
         console.log(error.message)
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);

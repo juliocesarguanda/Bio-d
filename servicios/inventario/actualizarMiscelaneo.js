@@ -2,17 +2,18 @@ const express = require('express');
 const router = express.Router();
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
+const { scanAndSendRequests } = require('../../utilidades/mensajesInterno.js');
 
 // Ruta para actualizar un misceláneo
 router.post('/', async (req, res) => {
+    try {
+        const id_empleado = req.session.usuario.id;
+        const { nombre, cantidad, valorEditarMiscelaneoId } = req.body;
+
     // Verificar si hay un usuario en la sesión
     if (!req.session.usuario) {
         return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
     }
-
-    try {
-        const id_empleado = req.session.usuario.id;
-        const { nombre, cantidad, valorEditarMiscelaneoId } = req.body;
 
         // Verifica si los datos requeridos están presentes
         if (!nombre || !cantidad || !valorEditarMiscelaneoId) {
@@ -54,6 +55,13 @@ router.post('/', async (req, res) => {
             return res.status(500).json({ estatus: 'error', respuesta: 'Error al actualizar el misceláneo' });
         }
 
+        scanAndSendRequests('/websocket/message', {
+            message: {
+                codigo: '0009',
+                socketId: req.session.usuario.socketId,
+                id: valorEditarMiscelaneoId
+            }
+        });
         res.status(200).json({ estatus: 'éxito', respuesta: 'Éxito al actualizar el misceláneo' });
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);

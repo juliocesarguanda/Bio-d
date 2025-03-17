@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const PDFDocument = require('pdfkit-table');
+const PDFDocument = require('pdfkit');
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
 
@@ -24,10 +24,10 @@ function format_number(number) {
 
 
 router.post('/', async (req, res) => {
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
     try {
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const { IdFactura } = JSON.parse(req.body.data);
         if (!IdFactura) return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
         // Obtener datos de la factura
@@ -70,8 +70,8 @@ router.post('/', async (req, res) => {
         SELECT id, nombre
         FROM tipo_pago`;
 
-    const tipoPagoResult = await conexion(tipoPago, []);
-    if (tipoPagoResult.estatus !== 'éxito') throw new Error(tipoPagoResult.respuesta);
+        const tipoPagoResult = await conexion(tipoPago, []);
+        if (tipoPagoResult.estatus !== 'éxito') throw new Error(tipoPagoResult.respuesta);
 
 
 
@@ -82,11 +82,11 @@ router.post('/', async (req, res) => {
             const tasa = parseFloat(facturaData.Bolivar);
             let totalMontoFactura = 0;
             let descuentoMonto = 0;
-        
+
             const examenes = examenesResult.respuesta.reduce((acc, row) => {
                 totalMontoFactura += row.bruto;
                 descuentoMonto += row.descuento;
-        
+
                 const examenExistente = acc.find(e => e[1] === row.nombre_examen); // Índice 0 para nombre_examen
                 if (examenExistente) {
                     examenExistente[1]++; // Índice 1 para cantidad
@@ -101,11 +101,11 @@ router.post('/', async (req, res) => {
                 }
                 return acc;
             }, []);
-        
+
             return { tasa, examenes, totalMontoFactura, descuentoMonto };
         };
-        
-        
+
+
 
         const { tasa, examenes, totalMontoFactura, descuentoMonto } = procesarDatos();
 
@@ -120,22 +120,22 @@ router.post('/', async (req, res) => {
         res.setHeader('Content-Disposition', `inline; filename=factura_${IdFactura}.pdf`);
         doc.pipe(res);
 
-        function agregarTabla(doc, data, x, y, colWidths, alignments,cellPadding, HelveticaText) {
+        function agregarTabla(doc, data, x, y, colWidths, alignments, cellPadding, HelveticaText) {
             let startX = x;
             let startY = y;
-        
+
             // Recorrer las filas de la tabla
             data.forEach((row) => {
                 let maxHeight = 0;
-        
+
                 // Recorrer las celdas de la fila
                 row.forEach((cell, colIndex) => {
                     // Definir el ancho de la celda basado en el array colWidths
                     const cellWidth = colWidths[colIndex];
-        
+
                     // Agregar contenido a la celda con la alineación especificada
                     const text = doc.font(HelveticaText[colIndex]).fontSize(FONTSIZEPAGE).text(cell, startX + cellPadding, startY + cellPadding, { width: cellWidth - cellPadding * 2, align: alignments[colIndex] }).height;
-        
+
                     if (text > maxHeight) {
                         maxHeight = text;
                     }
@@ -143,7 +143,7 @@ router.post('/', async (req, res) => {
                     // Avanza a la siguiente celda
                     startX += cellWidth;
                 });
-        
+
                 // Avanza a la siguiente fila
                 startY += maxHeight + cellPadding * 2;
                 startX = x;
@@ -155,7 +155,7 @@ router.post('/', async (req, res) => {
                 .font('Helvetica-Bold')
                 .text('FACTURA:    ', PAGE.margins.left + 417, startY + 13)
                 .font('Helvetica')
-                .text(String(facturaData.numero).padStart(7, '0') , PAGE.margins.left + 465, startY + 13)
+                .text(String(facturaData.numero).padStart(7, '0'), PAGE.margins.left + 465, startY + 13)
                 .font('Helvetica-Bold')
                 .text('NOMBRE O RAZON SOCIAL: ', PAGE.margins.left + 13, startY + 23.2)
                 .font('Helvetica')
@@ -175,61 +175,61 @@ router.post('/', async (req, res) => {
                 .font('Helvetica-Bold')
                 .text(`RIF/Ced.V-`, PAGE.margins.left + 257, startY + 69)
                 .font('Helvetica')
-                .text(facturaData.pa_cedula, PAGE.margins.left + 320, startY + 69) 
+                .text(facturaData.pa_cedula, PAGE.margins.left + 320, startY + 69)
                 .font('Helvetica-Bold')
-                .text(`RIF/Ced.V-`, PAGE.margins.left + 327, startY +  23.2)
+                .text(`RIF/Ced.V-`, PAGE.margins.left + 327, startY + 23.2)
                 .font('Helvetica')
-                .text(facturaData.pa_cedula, PAGE.margins.left + 390, startY +  23.2)
+                .text(facturaData.pa_cedula, PAGE.margins.left + 390, startY + 23.2)
                 .font('Helvetica-Bold')
                 .text(`FECHA:`, PAGE.margins.left + 447, startY + 23.2)
                 .font('Helvetica')
                 .text(new Date(facturaData.fecha).toLocaleDateString('es-VE'), PAGE.margins.left + 487, startY + 23.2)
                 .font('Helvetica-Bold')
-                .text(`CONVENIO:`, PAGE.margins.left  + 327, startY + 57)
+                .text(`CONVENIO:`, PAGE.margins.left + 327, startY + 57)
                 .font('Helvetica')
-                .text(facturaData.convenio, PAGE.margins.left  + 371, startY + 57)
+                .text(facturaData.convenio, PAGE.margins.left + 371, startY + 57)
                 .text(String(facturaData.numeroPaciente).padStart(2, '0'), PAGE.margins.left + 490, startY + 69)
                 .font('Helvetica-Bold')
                 .text(`TASA BCV BsD:`, PAGE.margins.left + 220, startY + 270)
                 .font('Helvetica')
                 .text(tasa, PAGE.margins.left + 310, startY + 270)
                 .font('Helvetica-Bold')
-                .text(`FORMA DE PAGO:`, PAGE.margins.left  + 40, startY + 195)
+                .text(`FORMA DE PAGO:`, PAGE.margins.left + 40, startY + 195)
                 .font('Helvetica-Bold')
-                .text(`CANTIDAD`, PAGE.margins.left  + 22, startY + 82)
-                .text(`DESCRIPCION DE ANALISIS`, PAGE.margins.left  + 135, startY + 82)
-                .text(`PRECIO UNITARIO`, PAGE.margins.left  + 314, startY + 82)
-                .text(`MONTO`, PAGE.margins.left  + 451, startY + 82);
+                .text(`CANTIDAD`, PAGE.margins.left + 22, startY + 82)
+                .text(`DESCRIPCION DE ANALISIS`, PAGE.margins.left + 135, startY + 82)
+                .text(`PRECIO UNITARIO`, PAGE.margins.left + 314, startY + 82)
+                .text(`MONTO`, PAGE.margins.left + 451, startY + 82);
 
 
 
 
 
-         
-        const data = [];  
 
-        tipoPagoResult.respuesta.forEach(row => {
-            data.push([
-                row.nombre,
-                row.id == facturaData.tipo_pago ? 'X' : ''
-            ]);
-        });
-          // Datos de ejemplo para la tabla
-           
-        const data2 = [
-            ['TOTAL EXENTO Bs:', format_number(facturaData.ftotal * tasa)],
-            [facturaData.descuentoF == 1 ? '0% DESCUENTO:' : facturaData.descuentoF == 2 ? '20% DESCUENTO:' : facturaData.descuentoF == 3 ? '30% DESCUENTO:' : facturaData.descuentoF == 4 ? '100% DESCUENTO:' : 'DESCUENTO:', format_number(parseFloat(descuentoMonto) * tasa)],
-            ['SUB-TOTAL Bs:', format_number(facturaData.ftotal * tasa)],
-            ['TOTAL FACTURA Bs:', format_number(facturaData.ftotal * tasa)],
-            ['MONTO EN DIVISAS $:', format_number(totalMontoFactura)]          
-        ];     
+            const data = [];
 
-        
-        agregarTabla(doc, data, PAGE.margins.left  + 40, startY + 200, [90, 20], [ 'left', 'right'],4,['Helvetica', 'Helvetica']);
-        
-        agregarTabla(doc, data2, PAGE.margins.left  + 361, startY + 213, [90, 61], [ 'right', 'right'],4,['Helvetica-Bold', 'Helvetica']);
+            tipoPagoResult.respuesta.forEach(row => {
+                data.push([
+                    row.nombre,
+                    row.id == facturaData.tipo_pago ? 'X' : ''
+                ]);
+            });
+            // Datos de ejemplo para la tabla
 
-        agregarTabla(doc, examenes, PAGE.margins.left - 8, startY + 86, [96, 195, 125, 115], [ 'center','left','right', 'right'],4,['Helvetica', 'Helvetica', 'Helvetica', 'Helvetica']);
+            const data2 = [
+                ['TOTAL EXENTO Bs:', format_number(facturaData.ftotal * tasa)],
+                [facturaData.descuentoF == 1 ? '0% DESCUENTO:' : facturaData.descuentoF == 2 ? '20% DESCUENTO:' : facturaData.descuentoF == 3 ? '30% DESCUENTO:' : facturaData.descuentoF == 4 ? '100% DESCUENTO:' : 'DESCUENTO:', format_number(parseFloat(descuentoMonto) * tasa)],
+                ['SUB-TOTAL Bs:', format_number(facturaData.ftotal * tasa)],
+                ['TOTAL FACTURA Bs:', format_number(facturaData.ftotal * tasa)],
+                ['MONTO EN DIVISAS $:', format_number(totalMontoFactura)]
+            ];
+
+
+            agregarTabla(doc, data, PAGE.margins.left + 40, startY + 200, [90, 20], ['left', 'right'], 4, ['Helvetica', 'Helvetica']);
+
+            agregarTabla(doc, data2, PAGE.margins.left + 361, startY + 213, [90, 61], ['right', 'right'], 4, ['Helvetica-Bold', 'Helvetica']);
+
+            agregarTabla(doc, examenes, PAGE.margins.left - 8, startY + 86, [96, 195, 125, 115], ['center', 'left', 'right', 'right'], 4, ['Helvetica', 'Helvetica', 'Helvetica', 'Helvetica']);
 
         };
 

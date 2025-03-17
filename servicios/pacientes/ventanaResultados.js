@@ -15,12 +15,13 @@ function calcularEdad(fechaNacimiento) {
 }
 
 router.post('/', async (req, res) => {
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
-    const { id } = req.body;
-    
     try {
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
+        const { id } = req.body;
+
+
         let convenios = [];
         const servicios = [];
 
@@ -115,17 +116,19 @@ router.post('/', async (req, res) => {
             }
         });
 
-        return res.status(200).json({ estatus: 'éxito', respuesta: {
-            analista: {
-                nombre: analista.nombre || '',
-                apellido: analista.apellido || '',
-                cargos: analista.cargos || ''
-            },
-            servicios: servicios,
-            paciente: paciente,
-            convenios: convenios,
-            examenes: Object.values(examenes)
-        }});
+        return res.status(200).json({
+            estatus: 'éxito', respuesta: {
+                analista: {
+                    nombre: analista.nombre || '',
+                    apellido: analista.apellido || '',
+                    cargos: analista.cargos || ''
+                },
+                servicios: servicios,
+                paciente: paciente,
+                convenios: convenios,
+                examenes: Object.values(examenes)
+            }
+        });
 
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);

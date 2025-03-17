@@ -5,12 +5,12 @@ const { reportError } = require('../../utilidades/reporte.js');
 
 // Ruta para consultar el analista del día
 router.post('/', async (req, res) => {
-    // Verificar si hay un usuario en la sesión
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
 
     try {
+        // Verificar si hay un usuario en la sesión
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const respuestaEnvio = {
             estatus: 'info',
             respuesta: 'Agrega el analista del día el cual es válido desde ahora hasta las 12:AM'

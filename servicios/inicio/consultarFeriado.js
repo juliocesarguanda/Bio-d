@@ -4,12 +4,12 @@ const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
 
 router.get('/', async (req, res) => {
-    // Verificar si hay un usuario en la sesión
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
 
     try {
+        // Verificar si hay un usuario en la sesión
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const fechaActual = new Date();
         const formattedDate = fechaActual.toISOString().split('T')[0]; // Obtener solo la fecha en formato YYYY-MM-DD
         const queryParametros = 'SELECT nombre, valor, tiempo FROM parametros WHERE nombre = "feriado"';

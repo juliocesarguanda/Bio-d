@@ -29,7 +29,6 @@ function iniciarLectorQR(botonQR, overlayQR, contenedorQR) {
                 const code = jsQR(imageData.data, imageData.width, imageData.height);
 
                 if (code) {
-                    console.log(code)
                     resultadoHistorial(code.data);
 
                     video.pause();
@@ -41,7 +40,6 @@ function iniciarLectorQR(botonQR, overlayQR, contenedorQR) {
             };
             requestAnimationFrame(scanQRCode);
         } catch (error) {
-            console.error('Error accessing the camera: ', error);
             alert('No se pudo acceder a la cámara. Por favor, verifica los permisos.');
         }
     });

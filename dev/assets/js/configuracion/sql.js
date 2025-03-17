@@ -72,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
        
         
     } catch (error) {
-        console.error('Error al exportar:', error);
         showNotification('Error al exportar la base de datos', 'error');
     } finally {
         exportBtn.disabled = false;
@@ -106,7 +105,6 @@ importBtn.addEventListener('click', async () => {
                   showNotification(response.respuesta, 'info');
               }});
           } catch (error) {
-              console.error('Error al importar:', error);
               showNotification('Error al importar la base de datos', 'error');
           } finally {
               importBtn.disabled = false;
@@ -115,7 +113,6 @@ importBtn.addEventListener('click', async () => {
 
       reader.readAsText(file);
   } catch (error) {
-      console.error('Error general:', error);
       showNotification('Error al importar la base de datos', 'error');
   }
 });

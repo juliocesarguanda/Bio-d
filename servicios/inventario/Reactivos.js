@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const moment = require('moment');
+const PDFDocument = require('pdfkit');
+const path = require('path');
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
-const PDFDocument = require('pdfkit-table');
-const path = require('path');
 const logoPath = path.join(__dirname, '..', '..', 'dev', 'assets', 'img', 'png', 'logo_c.png');
-                           
-const moment = require('moment');
+
 
 const dia = {
     'Monday': 'LUNES',
@@ -34,10 +34,10 @@ const mes = {
 
 router.post('/', async (req, res) => {
 
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
     try {
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const queryReactivos = "SELECT * FROM reactivo WHERE estatus = 1";
         const resultadosReactivos = await conexion(queryReactivos, []);
 
@@ -66,7 +66,7 @@ router.post('/', async (req, res) => {
         let cellPadding = 5;
         let maxHeight = 6;
         let startz = 95;
-let pag = 1
+        let pag = 1
 
         const drawHeader = (pageNumber) => {
 
@@ -105,23 +105,23 @@ let pag = 1
 
 
 
-    
+
             text = doc.font('Helvetica-Bold').fillColor('black').fontSize(10).text('NOMBRE', startX + cellPadding, startz + cellPadding, { width: 205 - cellPadding * 2, align: 'center' }).height;
-                if (text > maxHeight) { maxHeight = text; }
-                doc.rect(startX, startz, 205, maxHeight + cellPadding * 2).stroke();
-                startX += 205;
+            if (text > maxHeight) { maxHeight = text; }
+            doc.rect(startX, startz, 205, maxHeight + cellPadding * 2).stroke();
+            startX += 205;
 
-                text = doc.font('Helvetica-Bold').fillColor('black').fontSize(10).text('MARCA', startX + cellPadding, startz + cellPadding, { width: 205 - cellPadding * 2, align: 'center' }).height;
-                if (text > maxHeight) { maxHeight = text; }
-                doc.rect(startX, startz, 205, maxHeight + cellPadding * 2).stroke();
-                startX += 205;
-    
-                text = doc.font('Helvetica-Bold').fontSize(10).text('DISPONIBLE', startX + cellPadding, startz + cellPadding, { width: 90 - cellPadding * 2, align: 'center' }).height;
-                if (text > maxHeight) { maxHeight = text; }
-                doc.rect(startX, startz, 90, maxHeight + cellPadding * 2).stroke();
-                startX = 55;
+            text = doc.font('Helvetica-Bold').fillColor('black').fontSize(10).text('MARCA', startX + cellPadding, startz + cellPadding, { width: 205 - cellPadding * 2, align: 'center' }).height;
+            if (text > maxHeight) { maxHeight = text; }
+            doc.rect(startX, startz, 205, maxHeight + cellPadding * 2).stroke();
+            startX += 205;
 
-                             doc.image(logoPath, 500, 15, { width: 100 });
+            text = doc.font('Helvetica-Bold').fontSize(10).text('DISPONIBLE', startX + cellPadding, startz + cellPadding, { width: 90 - cellPadding * 2, align: 'center' }).height;
+            if (text > maxHeight) { maxHeight = text; }
+            doc.rect(startX, startz, 90, maxHeight + cellPadding * 2).stroke();
+            startX = 55;
+
+            doc.image(logoPath, 500, 15, { width: 100 });
         };
 
         // Llamar a la función
@@ -161,7 +161,6 @@ let pag = 1
 
         doc.end();
     } catch (error) {
-        console.log(error.message)
         reportError(__filename, new Date(), error.message, req.originalUrl, {});
         res.status(500).json({ estatus: 'error', respuesta: 'Error al generar el PDF: ' + error.message });
     }

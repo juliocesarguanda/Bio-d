@@ -4,11 +4,11 @@ const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
 
 router.get('/', async (req, res) => {
-     // Verificar si hay un usuario en la sesión
-     if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
     try {
+        // Verificar si hay un usuario en la sesión
+        if (!req.session.usuario) {
+            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        }
         const resultado = { convenios: [], tipoCedula: [], tipoPaciente: [], sexo: [] };
 
         // Consultar convenios

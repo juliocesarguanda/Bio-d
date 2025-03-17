@@ -2,13 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
+const { scanAndSendRequests } = require('../../utilidades/mensajesInterno.js');
 
 // Ruta para actualizar un reactivo
 router.post('/', async (req, res) => {
-    // Verificar si hay un usuario en la sesión
-    if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
-    }
 
     try {
         const id_empleado = req.session.usuario.id;
@@ -20,6 +17,10 @@ router.post('/', async (req, res) => {
             valorEditarReactivoId
         } = req.body;
 
+    // Verificar si hay un usuario en la sesión
+    if (!req.session.usuario) {
+        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+    }
         // Verificar si los datos requeridos están presentes
         if (!nombre || !marca || !cantidad || !requerido || !valorEditarReactivoId) {
             return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
@@ -67,6 +68,13 @@ router.post('/', async (req, res) => {
             return res.status(500).json({ estatus: 'error', respuesta: 'Error al actualizar el reactivo' });
         }
 
+        scanAndSendRequests('/websocket/message', {
+            message: {
+                codigo: '0008',
+                socketId: req.session.usuario.socketId,
+                id: valorEditarReactivoId
+            }
+        });
         res.status(200).json({ estatus: 'éxito', respuesta: 'Éxito al actualizar el reactivo' });
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
