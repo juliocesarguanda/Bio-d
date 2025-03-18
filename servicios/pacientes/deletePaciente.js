@@ -8,7 +8,7 @@ router.post('/', async (req, res) => {
     try {
         // Verificar si hay un usuario en la sesión
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
 
         const { valorIdPacienteDelete } = req.body;
@@ -32,10 +32,10 @@ router.post('/', async (req, res) => {
                 id: valorIdPacienteDelete
             }
         });
-        res.json({ estatus: 'exito', respuesta: 'Paciente eliminado correctamente' });
+        return res.status(200).json({ estatus: 'exito', respuesta: 'Paciente eliminado correctamente' });
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'ups. Algo ocurrio' });
+        return res.status(500).json({ estatus: 'error', respuesta: 'ups. Algo ocurrio' });
     }
 });
 

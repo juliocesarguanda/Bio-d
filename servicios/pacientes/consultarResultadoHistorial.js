@@ -16,7 +16,7 @@ router.post('/', async (req, res) => {
     const { examen_id } = req.body;
 
     if (!req.session.usuario) {
-      return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+      return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
     }
     if (!examen_id) {
       return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
@@ -73,7 +73,7 @@ router.post('/', async (req, res) => {
     const resultData = result.respuesta;
 
     if (resultData.length === 0) {
-      return res.json({ estatus: 'error', respuesta: 'no se encontraron resultados' });
+      return res.status(200).json({ estatus: 'error', respuesta: 'no se encontraron resultados' });
     }
 
     // Agrupar exámenes y análisis
@@ -122,11 +122,11 @@ router.post('/', async (req, res) => {
       factura: factura
     };
 
-    res.json({ estatus: 'éxito', respuesta: datos });
+    return res.status(200).json({ estatus: 'éxito', respuesta: datos });
 
   } catch (error) {
     reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-    res.status(500).json({ estatus: 'error', respuesta: 'Ups. Algo ocurrió' });
+    return res.status(500).json({ estatus: 'error', respuesta: 'Ups. Algo ocurrió' });
   }
 });
 

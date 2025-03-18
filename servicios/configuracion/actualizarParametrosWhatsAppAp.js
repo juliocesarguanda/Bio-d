@@ -7,7 +7,7 @@ const moment = require('moment');
 router.post('/', async (req, res) => {
     // Verificar si hay un usuario en la sesión
     if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
     }
 
     try {
@@ -24,14 +24,14 @@ router.post('/', async (req, res) => {
             const queryToken = "UPDATE parametros SET valor = ?, tiempo = ?, id_empleado = ? WHERE nombre = 'token'";
             await conexion(queryToken, [token || '', datetime, id_empleado]);
 
-            res.status(200).json({ estatus: 'exito', respuesta: 'Exito al actualizar WhatsAppAp' });
+            return res.status(200).json({ estatus: 'exito', respuesta: 'Exito al actualizar WhatsAppAp' });
         } catch (error) {
             reportError(__filename, moment().format('YYYY-MM-DD'), error.message, req.originalUrl, req.body);
-            res.status(500).json({ estatus: 'error', respuesta: 'ups. Algo ocurrio' });
+            return res.status(500).json({ estatus: 'error', respuesta: 'ups. Algo ocurrio' });
         }
     } catch (error) {
         reportError(__filename, moment().format('YYYY-MM-DD'), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Error al actualizar WhatsAppAp: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error al actualizar WhatsAppAp: ' + error.message });
     }
 });
 

@@ -12,7 +12,7 @@ router.post('/', async (req, res) => {
 
     // Verificar si hay un usuario en la sesión
     if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
     }
 
         // Verifica si los datos requeridos están presentes
@@ -62,10 +62,10 @@ router.post('/', async (req, res) => {
                 id: valorEditarMiscelaneoId
             }
         });
-        res.status(200).json({ estatus: 'éxito', respuesta: 'Éxito al actualizar el misceláneo' });
+        return res.status(200).json({ estatus: 'éxito', respuesta: 'Éxito al actualizar el misceláneo' });
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor: ' + error.message });
     }
 });
 

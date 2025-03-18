@@ -46,9 +46,4 @@ async function scanLocalNetwork() {
 }
 
 // Ejecutar el escaneo
-scanLocalNetwork()
-  .then(activeIPs => {
-    console.log('Dispositivos conectados:');
-    activeIPs.forEach(ip => console.log(`- ${ip}`));
-  })
-  .catch(err => console.error('Error:', err));
+scanLocalNetwork();

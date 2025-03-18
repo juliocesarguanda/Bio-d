@@ -1,8 +1,49 @@
-// Obtener todos los inputs con clase "datos"
-
-
 filtroTabletResultados('searchInputPendientes', 'patientTableBodyPendientes');
 filtroTabletResultados('searchInputTableContenedorCheckEliminarExamenes', 'contenedorCheckEliminarExamenes');
+
+
+
+
+
+function validarArchivo(nombreArchivo) {
+	const extension = nombreArchivo.split('.').pop().toLowerCase();
+	return extension === 'txt';
+}
+
+async function subirArchivo() {
+	const input = document.getElementById('archivoInput');
+	if (!input.files[0]) {
+		showNotification('Por favor selecciona un archivo', 'info');
+		return;
+	}
+
+	if (!validarArchivo(input.files[0].name)) {
+		
+		showNotification('Solo se permiten archivos .txt', 'info');
+		input.value = '';
+		return;
+	}
+
+	
+	const formData = new FormData();
+	formData.append('archivo', input.files[0]);
+
+	sendRequest('pacientes/file', formData, response => {
+		if (response.estatus === 'éxito') {
+			console.table(response.datos);
+			console.table(JSON.stringify(response.datos, null, 2));
+		} else {
+			
+		showNotification(response.respuesta || 'Error desconocido', 'info');
+		}
+	}).catch(error => {
+		showNotification(error.respuesta, 'info');
+	});
+
+}
+
+
+
 
 
 

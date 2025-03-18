@@ -6,9 +6,9 @@ router.post('/', (req, res) => {
     const { id } = req.body;
     if (req.session.usuario) {
         req.session.usuario.socketId = id;
-        res.status(200).json({ estatus: 'éxito', respuesta: req.session.usuario });
+        return res.status(200).json({ estatus: 'éxito', respuesta: req.session.usuario });
     } else {
-        res.status(401).json({ estatus: 'error', respuesta: 'No hay usuario logueado' });
+        return res.status(400).json({ estatus: 'error', respuesta: 'No hay usuario logueado' });
     }
 });
 

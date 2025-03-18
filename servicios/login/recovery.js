@@ -33,14 +33,13 @@ router.post('/', async (req, res) => {
         req.session.codigoRecuperacionHora = moment().format('YYYY-MM-DD');
         req.session.usuario = { usuario: username };
 
-        console.log(codigoRecuperacion);
 
         // Enviar el código por correo
         await sendEmail(email, 'Código de Recuperación', `Tu código de recuperación es: ${codigoRecuperacion}`);
 
-        res.status(200).json({ estatus: 'éxito', respuesta: 'Código de recuperación enviado' });
+        return res.status(200).json({ estatus: 'éxito', respuesta: 'Código de recuperación enviado' });
     } catch (error) {
-        res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor' });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor' });
     }
 });
 

@@ -3,13 +3,16 @@ const router = express.Router();
 const { conexion } = require('../../utilidades/conexion.js');
 const { reportError } = require('../../utilidades/reporte.js');
 
-function format_number(number) {
-    return number.includes('.') ? number.replace(/\.?0+$/, '') : number;
+function formatearDecimales(numero) {
+    // Trunca a máximo 2 decimales sin redondear
+    const truncado = Math.trunc(numero * 100) / 100;
+    
+    // Convierte a cadena y elimina ceros decimales innecesarios
+    return truncado.toFixed(2).replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1');
 }
-
 router.post('/', async (req, res) => {
     if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
     }
     const { IdFactura } = req.body;
     if (!IdFactura) {
@@ -78,13 +81,13 @@ router.post('/', async (req, res) => {
             if (!examenesFactura[row.id_examen]) {
                 examenesFactura[row.id_examen] = {
                     nombre_examen: row.nombre_examen,
-                    precio: row.bruto * row.dolar,
-                    monto: row.bruto * row.dolar,
+                    precio: formatearDecimales(row.bruto * row.dolar),
+                    monto: formatearDecimales(row.bruto * row.dolar),
                     cantidad: 1
                 };
             } else {
                 examenesFactura[row.id_examen].cantidad++;
-                examenesFactura[row.id_examen].monto += row.bruto * row.dolar;
+                examenesFactura[row.id_examen].monto += formatearDecimales(row.bruto * row.dolar);
             }
         });
 
@@ -116,22 +119,22 @@ router.post('/', async (req, res) => {
             convenioPaciente: facturaData.convenio,
             tasa: facturaData.Bolivar,
             examenes: examenes,
-            montoDivisa: format_number(facturaData.ftotal.toFixed(2)),
+            montoDivisa: formatearDecimales(facturaData.ftotal),
             direccion: 'BOCONO',
             idFactura: IdFactura,
             idPaciente: facturaData.id_paciente,
             formaPago: facturaData.tipo_pago,
             formasPago: formasPagoFactura,
             descuentoProsentaje: descuentoProsentaje,
-            totalFacturaBs: format_number((facturaData.ftotal * facturaData.Bolivar).toFixed(2)),
-            descuento: format_number((descuentoMontoFacturaFactura * facturaData.Bolivar).toFixed(2)),
-            total: format_number((totalMontoFactura * facturaData.Bolivar).toFixed(2))
+            totalFacturaBs: formatearDecimales((facturaData.ftotal * facturaData.Bolivar)),
+            descuento: formatearDecimales((descuentoMontoFacturaFactura * facturaData.Bolivar)),
+            total: formatearDecimales((totalMontoFactura * facturaData.Bolivar))
         };
 
-        res.json({estatus:examenesResult.estatus, respuesta:facturaFinal});
+        return res.status(200).json({estatus:examenesResult.estatus, respuesta:facturaFinal});
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Ups. Algo ocurrió' });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Ups. Algo ocurrió' });
     }
 });
 

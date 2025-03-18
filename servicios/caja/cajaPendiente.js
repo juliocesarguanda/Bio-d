@@ -9,7 +9,7 @@ function format_number(number) {
 
 router.post('/', async (req, res) => { 
     if (!req.session.usuario) {
-    return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+    return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
 }
     try {
         const query = `

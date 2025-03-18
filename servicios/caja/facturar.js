@@ -5,7 +5,7 @@ const { reportError } = require('../../utilidades/reporte.js');
 
 router.post('/', async (req, res) => {
     if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
     }
     const { id } = req.body;
 
@@ -123,13 +123,13 @@ router.post('/', async (req, res) => {
             total: (totalMontoFactura * facturaData.Bolivar).toFixed(2)
         };
 
-        res.json({
+        return res.status(200).json({
             estatus: 'exito',
             respuesta: facturaFinal
         });
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Ups. Algo ocurrió' });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Ups. Algo ocurrió' });
     }
 });
 

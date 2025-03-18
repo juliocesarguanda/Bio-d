@@ -56,7 +56,7 @@ router.post('/', async (req, res) => {
         sqlContent += `SET FOREIGN_KEY_CHECKS=1;\n`;
         sqlContent += `-- Fin del backup\n`;
 
-        res.status(200).json({
+        return res.status(200).json({
             estatus: 'exito',
             respuesta: sqlContent
         });
@@ -64,7 +64,7 @@ router.post('/', async (req, res) => {
     } catch (error) {
         console.error('Error al generar el backup:', error);
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({
+        return res.status(500).json({
             estatus: 'error',
             respuesta: 'Error al generar el backup: ' + error.message
         });

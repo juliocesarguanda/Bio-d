@@ -7,7 +7,7 @@ const { reportError } = require('../../utilidades/reporte.js');
 router.post('/', async (req, res) => {
     // Verificar si hay un usuario en la sesión
     if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
     }
 
     const id_empleado = req.session.usuario.id;
@@ -56,10 +56,10 @@ router.post('/', async (req, res) => {
             nombre_usuario: mostrar.nombre_usuario
         }));
 
-        res.json({ estatus: 'éxito', respuesta: resultado });
+        return res.status(200).json({ estatus: 'éxito', respuesta: resultado });
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, {});
-        res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor: ' + error.message });
     }
 });
 

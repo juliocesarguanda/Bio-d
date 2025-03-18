@@ -9,7 +9,7 @@ router.post('/', (req, res) => {
             return res.status(500).json({ estatus: 'error', respuesta: 'No se pudo cerrar la sesión' });
         }
 
-        res.status(200).json({ estatus: 'éxito', respuesta: 'Sesión cerrada correctamente' });
+        return res.status(200).json({ estatus: 'éxito', respuesta: 'Sesión cerrada correctamente' });
     });
 });
 

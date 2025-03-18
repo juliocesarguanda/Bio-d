@@ -1,5 +1,5 @@
 const os = require('os');
-const ping = require('ping');
+const net = require('net');
 const mysql = require('mysql2/promise');
 
 class MySQLConnector {
@@ -10,7 +10,7 @@ class MySQLConnector {
       database: 'bio_diagno_salud',
       connectTimeout: 5000,
       port: 3306,
-      ssl: false // Deshabilitamos SSL
+      ssl: false
     };
     this.connection = null;
     this.currentHost = null;
@@ -30,23 +30,49 @@ class MySQLConnector {
       });
     });
 
-    if (!targetSubnet) {
-      throw new Error('No se pudo detectar la red local');
-    }
+    if (!targetSubnet) throw new Error('No se pudo detectar la red local');
 
+    const ips = Array.from({length: 254}, (_, i) => targetSubnet + (i + 1));
     const activeIPs = [];
-    const promises = [];
+    const concurrency = 200; // Conexiones paralelas
+    const timeout = 200; // 200ms por IP
 
-    for (let i = 1; i <= 254; i++) {
-      const ip = targetSubnet + i;
-      promises.push(ping.promise.probe(ip, {
-        timeout: 1,
-        extra: process.platform === 'win32' ? ['-n', '1'] : ['-c', '1']
-      }));
+    const checkMySQLPort = (ip) => new Promise((resolve) => {
+      const socket = new net.Socket();
+      let resolved = false;
+
+      socket.on('connect', () => {
+        resolved = true;
+        socket.destroy();
+        resolve(ip);
+      });
+
+      socket.on('error', () => {
+        if (!resolved) {
+          socket.destroy();
+          resolve(null);
+        }
+      });
+
+      socket.setTimeout(timeout);
+      socket.on('timeout', () => {
+        if (!resolved) {
+          socket.destroy();
+          resolve(null);
+        }
+      });
+
+      socket.connect(3306, ip);
+    });
+
+    // Escaneo en bloques paralelos
+    while (ips.length) {
+      const chunk = ips.splice(0, concurrency);
+      const results = await Promise.all(chunk.map(checkMySQLPort));
+      results.forEach(ip => ip && activeIPs.push(ip));
+      if (activeIPs.length > 0) break; // Cortocircuito si encuentra IPs activas
     }
 
-    const results = await Promise.all(promises);
-    results.forEach(result => result.alive && activeIPs.push(result.host));
     return activeIPs;
   }
 
@@ -64,74 +90,75 @@ class MySQLConnector {
 
       if (rows[0].user_exists === 0) {
         console.log('Creando usuario root con acceso remoto...');
-        await tempConnection.query(`
-          CREATE USER 'root'@'%' IDENTIFIED BY '';
-        `);
-        await tempConnection.query(`
-          GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
-        `);
-        await tempConnection.query(`
-          FLUSH PRIVILEGES;
-        `);
+        await tempConnection.query(`CREATE USER 'root'@'%' IDENTIFIED BY ''`);
+        await tempConnection.query(`GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION`);
+        await tempConnection.query(`FLUSH PRIVILEGES`);
         console.log('Usuario root creado y permisos otorgados.');
-      } else {
-        console.log('Usuario root ya existe con acceso remoto.');
       }
-
+      
       await tempConnection.end();
     } catch (error) {
-      console.error('Error creando usuario root con acceso remoto:', error.message);
-    } 
+      console.error('Error en configuración de usuario:', error.message);
+    }
   }
 
   async connect() {
-    await this.createUserIfNotExists(); // Verificar y crear usuario antes de intentar conexión
+    await this.createUserIfNotExists();
 
     if (this.connection) return;
 
-    const tryHosts = ['127.0.0.1'];
-    if (this.currentHost) tryHosts.unshift(this.currentHost);
-
-    for (const host of tryHosts) {
-      console.log(`\n[${new Date().toLocaleTimeString()}] Intentando conexión a: ${host}`);
+    // Intentar conexiones rápidas primero
+    const fastHosts = ['127.0.0.1', 'localhost', this.currentHost].filter(Boolean);
+    for (const host of fastHosts) {
       try {
+        console.log(`\n[${new Date().toLocaleTimeString()}] Intentando conexión rápida a: ${host}`);
         this.connection = await mysql.createConnection({ ...this.config, host });
         await this.connection.ping();
         console.log(`✔ Conexión exitosa con ${host}`);
         this.currentHost = host;
         return;
       } catch (error) {
-        console.log(`✖ Falló conexión con ${host}: ${error.message}`);
+        console.log(`✖ Falló conexión rápida con ${host}: ${error.message}`);
         this.connection = null;
       }
     }
 
+    // Escaneo optimizado
+    console.log('\nIniciando escaneo de red acelerado...');
     let activeIPs;
     try {
-      console.log('\nIniciando escaneo de red...');
       activeIPs = await this.scanLocalNetwork();
       console.log('IPs activas encontradas:', activeIPs);
     } catch (error) {
       throw new Error('Error en escaneo de red: ' + error.message);
     }
 
-    for (const ip of activeIPs) {
-      console.log(`\n[${new Date().toLocaleTimeString()}] Intentando conexión a: ${ip}`);
-      try {
-        this.connection = await mysql.createConnection({ ...this.config, host: ip });
-        await this.connection.ping();
-        console.log(`✔ Conexión exitosa con ${ip}`);
-        this.currentHost = ip;
-        return;
-      } catch (error) {
-        console.log(`✖ Falló conexión con ${ip}: ${error.message}`);
-        this.connection = null;
-      }
+    // Intentar conexiones en paralelo
+    const connectionAttempts = activeIPs.map(ip => 
+      mysql.createConnection({ ...this.config, host: ip })
+        .then(conn => {
+          console.log(`✔ Conexión exitosa con ${ip}`);
+          return conn;
+        })
+        .catch(error => {
+          console.log(`✖ Falló conexión con ${ip}: ${error.message}`);
+          return null;
+        })
+    );
+
+    const connections = await Promise.all(connectionAttempts);
+    const validConnection = connections.find(conn => conn !== null);
+
+    if (validConnection) {
+      this.connection = validConnection;
+      this.currentHost = validConnection.config.host;
+      return;
     }
 
     throw new Error('No se pudo conectar a ningún servidor MySQL');
   }
 
+  // Resto de métodos se mantienen igual
   async query(sql, params = []) {
     try {
       if (!this.connection) await this.connect();

@@ -12,7 +12,7 @@ function formatNumber(number) {
 router.post('/', async (req, res) => {
     try {
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
         const { id } = req.body;
         const currentHour = new Date().getHours();
@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
         }
 
         const resultado = resultados.respuesta.map(mostrar => {
-            const esFeriado = (mostrar.feriado == 1 && mostrar.tiempo.split('T')[0] === currentDate);
+            const esFeriado = (mostrar.feriado == 1 && String(mostrar.tiempo).split('T')[0] === currentDate);
             const esDomingo = (new Date().getDay() === 0);
             let precioBruto = mostrar.precio * mostrar.dolar;
             let precio = precioBruto;
@@ -64,10 +64,10 @@ router.post('/', async (req, res) => {
             };
         });
 
-        res.status(200).json(resultado);
+        return res.status(200).json(resultado);
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar los exámenes: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar los exámenes: ' + error.message });
     }
 });
 

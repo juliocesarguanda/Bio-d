@@ -8,7 +8,7 @@ const { scanAndSendRequests } = require('../../utilidades/mensajesInterno.js');
 router.post('/', async (req, res) => {
     try {
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
         const { paciente, examenes } = req.body;
 
@@ -67,7 +67,7 @@ router.post('/', async (req, res) => {
             numeroPaciente = dataParametros.pacienteDia;
         }
 
-        const esFeriado = (feriado.valor == 1 && feriado.tiempo.split('T')[0] === fecha);
+        const esFeriado = (feriado.valor == 1 && String(feriado.tiempo).split('T')[0] === fecha);
         const esFeriado2 = (new Date().getDay() === 0);
 
         // Obtener precios de exámenes en una consulta separada

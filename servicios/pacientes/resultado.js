@@ -30,7 +30,7 @@ function calcularEdad(fechaNacimiento) {
 router.post('/', async (req, res) => {
     try {
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
         const { idResultado, qr } = JSON.parse(req.body.data);
         if (!idResultado || !qr) return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
@@ -205,9 +205,8 @@ router.post('/', async (req, res) => {
         });
         doc.end();
     } catch (error) {
-        console.log(error.message)
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Error generando PDF' });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error generando PDF' });
     }
 });
 

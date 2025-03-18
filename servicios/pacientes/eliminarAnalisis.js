@@ -7,7 +7,7 @@ const { scanAndSendRequests } = require('../../utilidades/mensajesInterno.js');
 router.post('/', async (req, res) => {
     try {
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
         const { nombre } = req.body;
 
@@ -36,7 +36,7 @@ router.post('/', async (req, res) => {
         const resultAbonados = await conexion(sqlAbonados, nombre);
 
         if (resultAbonados.estatus !== 'éxito' || resultAbonados.respuesta.length === 0) {
-            return res.json({ estatus: 'exito', respuesta: 'Análisis eliminados correctamente' });
+            return res.status(200).json({ estatus: 'exito', respuesta: 'Análisis eliminados correctamente' });
         }
 
         const { abonado: abonadoTotal, paciente } = resultAbonados.respuesta[0];
@@ -79,13 +79,13 @@ router.post('/', async (req, res) => {
             }
         });
         if (devolucion > 0) {
-            res.json({ estatus: 'exito', respuesta: `Análisis eliminados correctamente y con ${devolucion} BS de devolución` });
+            return res.status(200).json({ estatus: 'exito', respuesta: `Análisis eliminados correctamente y con ${devolucion} BS de devolución` });
         } else {
-            res.json({ estatus: 'exito', respuesta: 'Análisis eliminados correctamente' });
+            return res.status(200).json({ estatus: 'exito', respuesta: 'Análisis eliminados correctamente' });
         }
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Ups. Algo ocurrió' });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Ups. Algo ocurrió' });
     }
 });
 

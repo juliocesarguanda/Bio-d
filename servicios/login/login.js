@@ -31,7 +31,7 @@ router.post('/', async (req, res) => {
         }
 
         if (resultados.respuesta.length === 0 || resultados.respuesta[0].contrasena !== password) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario o contraseña incorrectos' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario o contraseña incorrectos' });
         }
 
         const usuario = resultados.respuesta[0];
@@ -52,10 +52,10 @@ router.post('/', async (req, res) => {
             tipo: usuario.tipo
         };
 
-        res.status(200).json({ estatus: 'éxito', respuesta: 'Usuario autenticado y datos guardados en sesión' });
+        return res.status(200).json({ estatus: 'éxito', respuesta: 'Usuario autenticado y datos guardados en sesión' });
     } catch (error) {
         reportError(__filename, new Date(), resultados.respuesta, req.originalUrl, {});
-        res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor' });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor' });
     }
 });
 

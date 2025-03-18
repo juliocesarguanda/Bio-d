@@ -21,7 +21,6 @@ async function sendEmail(to, subject, text) {
 
         // Enviar el correo
         let info = await transporter.sendMail(mailOptions);
-        console.log('Correo enviado:', info.response);
     } catch (error) {
         if (error.code === 'ENOTFOUND') {
             console.error('Error de conexión: No se pudo conectar a Internet.');

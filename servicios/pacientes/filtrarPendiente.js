@@ -6,7 +6,7 @@ const { reportError } = require('../../utilidades/reporte.js');
 router.post('/', async (req, res) => {
     try {
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
         const query = `
             SELECT pe.*, p.nombre AS nombre, p.apellido AS apellido, p.id AS id, p.cedula AS cedula,

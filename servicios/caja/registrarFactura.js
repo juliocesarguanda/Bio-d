@@ -6,7 +6,7 @@ const moment = require('moment');
 
 router.post('/', async (req, res) => {
     if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
     }
     const { registrarFactura, paciente } = req.body;
 
@@ -50,10 +50,10 @@ router.post('/', async (req, res) => {
         }
 
         // Respuesta exitosa
-        res.json({ estatus: 'exito' });
+        return res.status(200).json({ estatus: 'exito' });
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Ups. Algo ocurrió' });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Ups. Algo ocurrió' });
     }
 });
 

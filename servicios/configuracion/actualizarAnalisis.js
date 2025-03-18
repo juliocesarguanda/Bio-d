@@ -6,7 +6,7 @@ const { reportError } = require('../../utilidades/reporte.js');
 router.post('/', async (req, res) => {
     // Verificar si hay un usuario en la sesión
     if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
     }
 
     try {
@@ -47,14 +47,14 @@ router.post('/', async (req, res) => {
                 await conexion(sqlInsertMiscelaneo, [miscelaneo, valorEditarAnalisisId]);
             }
 
-            res.status(200).json({ estatus: 'exito', respuesta: 'Análisis actualizado correctamente' });
+            return res.status(200).json({ estatus: 'exito', respuesta: 'Análisis actualizado correctamente' });
         } catch (error) {
             reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-            res.status(500).json({ estatus: 'error', respuesta: 'ups. Algo ocurrio' });
+            return res.status(500).json({ estatus: 'error', respuesta: 'ups. Algo ocurrio' });
         }
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Error al actualizar el análisis: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error al actualizar el análisis: ' + error.message });
     }
 });
 

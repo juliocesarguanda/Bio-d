@@ -10,7 +10,7 @@ router.post('/', async (req, res) => {
     try {
         // Verificar si hay un usuario en la sesión
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
 
         const { nombre } = req.body;
@@ -35,10 +35,10 @@ router.post('/', async (req, res) => {
                 socketId: req.session.usuario.socketId
             }
         });
-        res.status(200).json({ estatus: 'éxito', respuesta: 'Analista actualizado correctamente' });
+        return res.status(200).json({ estatus: 'éxito', respuesta: 'Analista actualizado correctamente' });
     } catch (error) {
         reportError(__filename, moment().format('YYYY-MM-DD'), error.message, req.originalUrl, {});
-        res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor: ' + error.message });
     }
 });
 

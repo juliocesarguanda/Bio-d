@@ -20,13 +20,19 @@ const PAGE = {
 function format_number(number) {
     return parseFloat(number).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
 }
-
+function formatearDecimales(numero) {
+        // Trunca a máximo 2 decimales sin redondear
+        const truncado = Math.trunc(numero * 100) / 100;
+        
+        // Convierte a cadena y elimina ceros decimales innecesarios
+        return truncado.toFixed(2).replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1');
+    }
 
 
 router.post('/', async (req, res) => {
     try {
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
         const { IdFactura } = JSON.parse(req.body.data);
         if (!IdFactura) return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
@@ -90,13 +96,13 @@ router.post('/', async (req, res) => {
                 const examenExistente = acc.find(e => e[1] === row.nombre_examen); // Índice 0 para nombre_examen
                 if (examenExistente) {
                     examenExistente[1]++; // Índice 1 para cantidad
-                    examenExistente[3] += row.bruto * row.dolar; // Índice 3 para monto
+                    examenExistente[3] += formatearDecimales(row.bruto * row.dolar); // Índice 3 para monto 
                 } else {
                     acc.push([
                         1, // Índice 1 para cantidad
                         row.nombre_examen, // Índice 0 para nombre_examen
-                        row.bruto * row.dolar, // Índice 2 para precio
-                        row.bruto * row.dolar // Índice 3 para monto
+                        formatearDecimales(row.bruto * row.dolar), // Índice 2 para precio
+                        formatearDecimales(row.bruto * row.dolar) // Índice 3 para monto
                     ]);
                 }
                 return acc;
@@ -243,7 +249,7 @@ router.post('/', async (req, res) => {
 
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Error generando PDF' });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error generando PDF' });
     }
 });
 

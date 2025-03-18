@@ -9,7 +9,7 @@ router.post('/', async (req, res) => {
     try {
         // Verificar si hay un usuario en la sesión
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
         const { data } = req.body;
         const valor = data == true ? 1 : 0;
@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
 
         // Verificar si hay un usuario en la sesión
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
 
         const id_empleado = req.session.usuario.id;
@@ -36,10 +36,10 @@ router.post('/', async (req, res) => {
                 socketId: req.session.usuario.socketId
             }
         });
-        res.json({ estatus: 'éxito', respuesta: 'Feriado actualizado' });
+        return res.status(200).json({ estatus: 'éxito', respuesta: 'Feriado actualizado' });
     } catch (error) {
         reportError(__filename, moment().format('YYYY-MM-DD'), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Error al actualizar el feriado' });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error al actualizar el feriado' });
     }
 });
 

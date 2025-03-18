@@ -9,7 +9,7 @@ function formatNumber(number) {
 
 router.post('/', async (req, res) => {
     if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
     }
     try {
         let exchange_rate = 0;
@@ -39,10 +39,10 @@ router.post('/', async (req, res) => {
             };
         });
 
-        res.json({ estatus: 'éxito', respuesta: resultado });
+        return res.status(200).json({ estatus: 'éxito', respuesta: resultado });
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, {});
-        res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar los exámenes: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar los exámenes: ' + error.message });
     }
 });
 

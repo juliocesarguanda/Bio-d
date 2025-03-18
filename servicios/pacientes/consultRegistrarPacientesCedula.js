@@ -7,7 +7,7 @@ router.post('/', async (req, res) => {
     try {
         // Verificar si hay un usuario en la sesión
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
 
         const { cedula, tipoCedula } = req.body;
@@ -28,12 +28,12 @@ router.post('/', async (req, res) => {
 
             if (resultados.respuesta.length > 0) {
                 const paciente = resultados.respuesta[0];
-                res.json({ estatus: 'éxito', respuesta: paciente });
+                return res.status(200).json({ estatus: 'éxito', respuesta: paciente });
             }
         }
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar los datos: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar los datos: ' + error.message });
     }
 });
 

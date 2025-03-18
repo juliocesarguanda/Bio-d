@@ -12,7 +12,6 @@ async function reportError(filePath, timestamp, message, url, requestData) {
 
     try {
         await sendMessage(errorMessage);
-        console.log('Error reportado a Telegram');
     } catch (error) {
         console.error('Error al enviar el reporte a Telegram:', error.message);
     }

@@ -8,10 +8,10 @@ router.get('/', async (req, res) => {
     try {
         // Verificar si hay un usuario en la sesión
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
         const fechaActual = new Date();
-        const formattedDate = fechaActual.toISOString().split('T')[0]; // Obtener solo la fecha en formato YYYY-MM-DD
+        const formattedDate = String(fechaActual.toISOString()).split('T')[0]; // Obtener solo la fecha en formato YYYY-MM-DD
         const queryParametros = 'SELECT nombre, valor, tiempo FROM parametros WHERE nombre = "feriado"';
         const resultados = await conexion(queryParametros, []);
 
@@ -24,16 +24,16 @@ router.get('/', async (req, res) => {
 
         resultados.respuesta.forEach(row => {
             const fechaFeriado = new Date(row.tiempo);
-            const fechaFeriadoLocal = new Date(fechaFeriado.getTime() - (fechaFeriado.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+            const fechaFeriadoLocal = String(new Date(fechaFeriado.getTime() - (fechaFeriado.getTimezoneOffset() * 60000)).toISOString()).split('T')[0];
             if (row.valor == 1 && fechaFeriadoLocal === formattedDate) {
                 esFeriado = true;
             }
         });
 
-        res.json({ estatus: 'éxito', respuesta: esFeriado });
+        return res.status(200).json({ estatus: 'éxito', respuesta: esFeriado });
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, {});
-        res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar los feriados: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar los feriados: ' + error.message });
     }
 });
 

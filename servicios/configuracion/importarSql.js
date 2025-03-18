@@ -36,21 +36,20 @@ router.post('/', async (req, res) => {
             const queries = sql.split(';').filter(query => query.trim() !== '');
             for (let query of queries) {
                 // Asegúrate de registrar consultas para rastreo en caso de errores
-                console.log('Ejecutando:', query);
                 await conexion(query);
             }
 
-            res.status(200).json({ estatus: 'exito', respuesta: 'Base de datos importada correctamente' });
+            return res.status(200).json({ estatus: 'exito', respuesta: 'Base de datos importada correctamente' });
         } catch (error) {
             console.error('Error ejecutando SQL:', error);
             reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-            res.status(500).json({ estatus: 'error', respuesta: 'Error al procesar el archivo SQL: ' + error.message });
+            return res.status(500).json({ estatus: 'error', respuesta: 'Error al procesar el archivo SQL: ' + error.message });
         }
 
     } catch (error) {
         console.error('Error general:', error);
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Error inesperado: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error inesperado: ' + error.message });
     }
 });
 

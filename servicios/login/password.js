@@ -13,7 +13,7 @@ router.post('/', async (req, res) => {
     try {
         // Verificar si hay un usuario en la sesión
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
 
         const username = req.session.usuario.usuario;
@@ -26,9 +26,9 @@ router.post('/', async (req, res) => {
             return res.status(500).json({ estatus: 'error', respuesta: resultados.respuesta });
         }
 
-        res.status(200).json({ estatus: 'éxito', respuesta: 'Contraseña actualizada' });
+        return res.status(200).json({ estatus: 'éxito', respuesta: 'Contraseña actualizada' });
     } catch (error) {
-        res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor' });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error en el servidor' });
     }
 });
 

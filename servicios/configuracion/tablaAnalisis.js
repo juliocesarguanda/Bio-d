@@ -5,7 +5,7 @@ const { reportError } = require('../../utilidades/reporte.js');
 
 router.get('/', async (req, res) => {
     if (!req.session.usuario) {
-        return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+        return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
     }
     try {
         const query = `
@@ -31,10 +31,10 @@ router.get('/', async (req, res) => {
             reactivoEstatus: mostrar.reactivoEstatus
         }));
 
-        res.json({ estatus: 'éxito', respuesta: resultado });
+        return res.status(200).json({ estatus: 'éxito', respuesta: resultado });
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, {});
-        res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar los análisis: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar los análisis: ' + error.message });
     }
 });
 

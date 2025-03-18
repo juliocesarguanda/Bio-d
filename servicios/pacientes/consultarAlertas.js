@@ -6,7 +6,7 @@ const { reportError } = require('../../utilidades/reporte.js');
 router.post('/', async (req, res) => {
     try {
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
         const { id } = req.body;
 
@@ -37,10 +37,10 @@ router.post('/', async (req, res) => {
             valor: row.valor
         }));
 
-        res.status(200).json(resultado);
+        return res.status(200).json(resultado);
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, req.body);
-        res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar las alertas: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error al consultar las alertas: ' + error.message });
     }
 });
 

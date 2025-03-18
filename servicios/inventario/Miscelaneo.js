@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
 
     try {
         if (!req.session.usuario) {
-            return res.status(401).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
+            return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
         const queryMiscelaneos = "SELECT * FROM miscelaneo WHERE estatus = 1";
         const resultadosMiscelaneos = await conexion(queryMiscelaneos, []);
@@ -151,7 +151,7 @@ router.post('/', async (req, res) => {
         doc.end();
     } catch (error) {
         reportError(__filename, new Date(), error.message, req.originalUrl, {});
-        res.status(500).json({ estatus: 'error', respuesta: 'Error al generar el PDF: ' + error.message });
+        return res.status(500).json({ estatus: 'error', respuesta: 'Error al generar el PDF: ' + error.message });
     }
 });
 

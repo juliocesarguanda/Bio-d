@@ -1315,5 +1315,5 @@ try {
     });
 
 } catch (error) {
-    reportError(error.message, 'main.js', e.target, e.target.id);
+   
 }

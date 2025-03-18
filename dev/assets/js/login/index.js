@@ -247,12 +247,10 @@ try {
 
             bell.promise(promise, state);
 
-            console.log(e.target.id);
         });
     });
 
 } catch (error) {
-    console.log(error.message);
 }
 
 
