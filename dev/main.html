@@ -245,8 +245,15 @@
                                         d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
                                 </svg>
                             </div>
-                            <!-- <input type="file" id="archivoInput">
-                            <button onclick="subirArchivo()">enbuio</button> -->
+                            <div>
+                                <input type="file" id="archivoInput" accept=".txt" style="display: none;">
+                                <button type="button" id="uploadButton"">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                        <path fill="currentColor" d="M13 7h-2v6H7v2h6v6h2v-6h6v-2h-6V7z"/>
+                                    </svg>
+                                    Subir Archivo TXT
+                                </button>
+                            </div>
                             <div class="table-container">
                                 <table class="table">
                                     <thead>
@@ -1078,7 +1085,7 @@
                         <div class="input-container-text">
 
                             <input class="upperCase" name="cedula" id="cedula" name="numero" type="text" maxlength="15"
-                                required="" oninput="validateInputCedula(this)">
+                                required="" >
                             <label for="cedula">Cédula.</label>
                         </div>
                     </div>

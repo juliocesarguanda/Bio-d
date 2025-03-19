@@ -45,11 +45,7 @@ function consultRegistrarPacientesCedula() {
             fields.forEach(field => {
                 document.getElementById(field).classList.add('active');
             });
-        } else {
-            showNotification(response.respuesta, "info");
         }
-    }).catch(error => {
-        showNotification("Error: " + error.respuesta, "info");
     });
 }
 

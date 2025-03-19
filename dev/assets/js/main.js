@@ -708,8 +708,6 @@ try {
                     } else {
                         showNotification(resultado.respuesta, 'info');
                     }
-                }).catch(error => {
-                    showNotification(error.respuesta, "info");
                 });
 
 

@@ -10,7 +10,12 @@ class MySQLConnector {
       database: 'bio_diagno_salud',
       connectTimeout: 5000,
       port: 3306,
-      ssl: false
+      ssl: false,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+      charset: 'utf8mb4',
+      collation: 'utf8mb4_unicode_ci'
     };
     this.connection = null;
     this.currentHost = null;

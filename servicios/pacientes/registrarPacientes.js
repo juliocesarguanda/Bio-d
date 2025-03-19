@@ -6,6 +6,7 @@ const { scanAndSendRequests } = require('../../utilidades/mensajesInterno.js');
 
 router.post('/', async (req, res) => {
     try {
+        
         if (!req.session.usuario) {
             return res.status(400).json({ estatus: 'error', respuesta: 'Usuario no autenticado' });
         }
@@ -18,8 +19,20 @@ router.post('/', async (req, res) => {
         if (!nombre || !apellido || !tipoCedula || !cedula || !fechaNacimiento || !convenio || !paciente || !telefono || !sexo) {
             return res.status(400).json({ estatus: 'error', respuesta: 'Faltan datos requeridos' });
         }
-
-        const sqlSelect = 'SELECT * FROM paciente WHERE tipo_cedula = ? AND cedula = ?';
+        const MAX_CEDULA = 250;
+        if (cedula.length > MAX_CEDULA) {
+            return res.status(400).json({
+                estatus: 'error',
+                respuesta: `La cédula no puede exceder ${MAX_CEDULA} caracteres`
+            });
+        }
+        const sqlSelect = `
+        SELECT id 
+        FROM paciente 
+        WHERE tipo_cedula = ? 
+        AND cedula = ? 
+        LIMIT 1
+    `;
         const resultadosSelect = await conexion(sqlSelect, [tipoCedula, cedula]);
 
         if (resultadosSelect.estatus === 'error') {

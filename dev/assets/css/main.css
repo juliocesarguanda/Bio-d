@@ -2001,3 +2001,32 @@ margin: 0 5px;
 .buscar-examens:hover > .menu-description-e {
     opacity: 1;
 }
+
+#uploadButton {
+    background-color: var(--color-6);
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: auto;
+    margin-bottom: 10px;
+}
+
+#uploadButton svg {
+    width: 24px;
+    height: 24px;
+}
+
+#uploadButton:hover {
+    opacity: 0.8;
+}
+
+#uploadButton.active {
+    background-color: var(--color-3);
+}

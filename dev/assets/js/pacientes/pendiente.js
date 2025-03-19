@@ -5,42 +5,169 @@ filtroTabletResultados('searchInputTableContenedorCheckEliminarExamenes', 'conte
 
 
 
-function validarArchivo(nombreArchivo) {
-	const extension = nombreArchivo.split('.').pop().toLowerCase();
-	return extension === 'txt';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function validarExtension(nombreArchivo) {
+    return nombreArchivo.toLowerCase().endsWith('.txt');
 }
 
-async function subirArchivo() {
-	const input = document.getElementById('archivoInput');
-	if (!input.files[0]) {
-		showNotification('Por favor selecciona un archivo', 'info');
-		return;
-	}
+function validarFormatoArchivo(contenido) {
+    const lineas = contenido.split('\n').filter(l => l.trim() !== '');
 
-	if (!validarArchivo(input.files[0].name)) {
+    const encabezadoEsperado = [
+        "Solicitar Tiempo",
+        "Nombre/ID",
+        "Prueba",
+        "Absorbencia",
+        "Concentración",
+        "Interpretación",
+        "Referencia"
+    ];
+
+    if (lineas.length === 0) throw new Error('Archivo vacío');
+
+    const normalizar = texto =>
+        texto.normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .toLowerCase();
+
+    const encabezadoRecibido = lineas[0]
+        .replace(/\r/g, '')
+        .split('\t')
+        .map(c => c.trim())
+        .filter(c => c !== '')
+        .map(normalizar);
+
+    const encabezadoEsperadoNormalizado = encabezadoEsperado.map(normalizar);
+
+    if (encabezadoRecibido.length !== encabezadoEsperadoNormalizado.length) {
+        throw new Error(`Columnas detectadas: ${encabezadoRecibido.length}. Requeridas: ${encabezadoEsperadoNormalizado.length}`);
+    }
+
+    const diferencias = encabezadoEsperadoNormalizado.map((v, i) => ({
+        Campo: encabezadoEsperado[i],
+        Esperado: v,
+        Recibido: encabezadoRecibido[i],
+        Coincide: v === encabezadoRecibido[i] ? '✅' : '❌'
+    }));
+
+    if (diferencias.some(d => d.Coincide === '❌')) {
+        console.table(diferencias);
+        throw new Error('Error en formato de encabezado');
+    }
+}
+
+function procesarResultados(contenido) {
+    validarFormatoArchivo(contenido);
+
+    const registros = contenido.split('\n')
+        .slice(1)
+        .map(linea => {
+            const campos = linea.replace(/\r/g, '')
+                .split('\t')
+                .map(c => c.trim());
+
+            if (campos.length < 7) return null;
+
+            return {
+                Fecha: campos[0]?.split(' ')[0]?.replace(/\//g, '-') || '',
+                Hora: campos[0]?.split(' ')[1] || '',
+                Muestra: campos[1]?.replace('R-', '') || '',
+                Prueba: campos[2] || '',
+                Concentración: campos[4]?.split(' ')[0] || ''
+            };
+        })
+        .filter(item => item !== null);
+
+    const agrupados = registros.reduce((acumulador, actual) => {
+        const clave = actual.Muestra;
+        if (!acumulador[clave]) acumulador[clave] = [];
+        acumulador[clave].push(actual);
+        return acumulador;
+    }, {});
+
+    return Object.entries(agrupados)
+        .sort(([a], [b]) => b.localeCompare(a))
+        .map(([muestra, registros]) => ({
+            Muestra: muestra,
+            Registros: registros.sort((a, b) =>
+                parseFloat(b.Concentración || 0) - parseFloat(a.Concentración || 0)
+            )
+        }));
+}
+
+function leerArchivo(archivo) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = () => reject(new Error('Error al leer archivo'));
+        reader.readAsText(archivo, 'Windows-1252');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('archivoInput');
+    const uploadButton = document.getElementById('uploadButton');
+
+    uploadButton.addEventListener('click', () => fileInput.click());
+
+
+    fileInput.addEventListener('change', async () => {
 		
-		showNotification('Solo se permiten archivos .txt', 'info');
-		input.value = '';
-		return;
-	}
+	uploadButton.classList.add('active');
+        const archivo = fileInput.files[0];
+        try {
+            if (!archivo) throw new Error('Selecciona un archivo');
+            if (!validarExtension(archivo.name)) throw new Error('Solo archivos .txt permitidos');
 
-	
-	const formData = new FormData();
-	formData.append('archivo', input.files[0]);
+            const contenido = await leerArchivo(archivo);
+            const resultados = procesarResultados(contenido);
 
-	sendRequest('pacientes/file', formData, response => {
-		if (response.estatus === 'éxito') {
-			console.table(response.datos);
-			console.table(JSON.stringify(response.datos, null, 2));
-		} else {
-			
-		showNotification(response.respuesta || 'Error desconocido', 'info');
-		}
-	}).catch(error => {
-		showNotification(error.respuesta, 'info');
-	});
+            console.table(resultados);
 
-}
+            resultados.forEach(grupo => {
+                console.log(`%cMuestra ${grupo.Muestra} (${grupo.Registros.length} pruebas):`, 'font-weight: bold; color: #4CAF50;');
+                console.table(grupo.Registros);
+            });
+
+            const message = resultados.length > 0
+                ? `Procesadas ${resultados.length} muestras`
+                : 'No se encontraron registros';
+
+            showNotification(message, resultados.length > 0 ? 'success' : 'info');
+        } catch (error) {
+            showNotification(error.message, 'error');
+        } finally {
+
+            uploadButton.classList.remove('active');
+            fileInput.value = ''; // Limpiar la selección del archivo
+        }
+    });
+});
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -53,8 +180,8 @@ function mostrarPendientes(v) {
 	var fila = tbody.insertRow();
 	// Crea las celdas y agrega contenido
 	if (v.estado == 1) {
-        fila.className = "estatus";
-    }
+		fila.className = "estatus";
+	}
 	const celda1 = fila.insertCell();
 	celda1.innerHTML = v.tipo_cedula + v.cedula;
 
@@ -334,16 +461,16 @@ document.querySelectorAll('.input-container-alert input').forEach(input => {
 });
 
 function tablaPacienteEliminarExamenes(v1) {
-    sendRequest('pacientes/consultarAnalisis', { id: v1 }, response => {
-        if (response.estatus === 'éxito') {
-            document.getElementById('contenedorCheckEliminarExamenes').innerHTML = "";
-            response.respuesta.forEach(examen => agregarContenidoTablaEliminarExamenes(examen));
-        } else {
-            showNotification(response.respuesta, 'info');
-        }
-    }).catch(error => {
-        showNotification(error.respuesta, 'info');
-    });
+	sendRequest('pacientes/consultarAnalisis', { id: v1 }, response => {
+		if (response.estatus === 'éxito') {
+			document.getElementById('contenedorCheckEliminarExamenes').innerHTML = "";
+			response.respuesta.forEach(examen => agregarContenidoTablaEliminarExamenes(examen));
+		} else {
+			showNotification(response.respuesta, 'info');
+		}
+	}).catch(error => {
+		showNotification(error.respuesta, 'info');
+	});
 }
 function agregarContenidoTablaEliminarExamenes(v) {
 	const tbody = document.getElementById('contenedorCheckEliminarExamenes');
@@ -351,10 +478,10 @@ function agregarContenidoTablaEliminarExamenes(v) {
 	const div = document.createElement("tr");
 	div.className = 'checkbox-wrapper';
 	if (v.estado == 1) {
-        div.className = "checkbox-wrapper estatus";
-    } else if (v.estado == 2) {
-        div.className = "checkbox-wrapper noneEstatus";
-    }
+		div.className = "checkbox-wrapper estatus";
+	} else if (v.estado == 2) {
+		div.className = "checkbox-wrapper noneEstatus";
+	}
 	const checkbox = document.createElement("input");
 	checkbox.className = "elimiarExamenesPendientesError check";
 	checkbox.type = "checkbox";
